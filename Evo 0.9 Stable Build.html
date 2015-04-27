@@ -1,0 +1,1504 @@
+<html>
+<head><title>Evolution Simulator</title>
+
+<script type="text/javascript">
+
+//The Evo object holds all parts of the simulation except the array [soup]
+//I hid all parts of the simulation inside of global objects to make it less likely that rogue code will break the simulation
+
+var Evo = {
+
+	version:		0.9,
+	interval:		undefined,	//holds a reference to the interval created by setInterval()
+	limit:			5,		//population limit
+	delay:			0,		//number of milliseconds to wait before the next generation
+	mutationRate:	10,		//chance of mutation = 1 / [mutationRate]
+	generations:	0,
+	generationsLeft:	-1,
+	on:			false,
+	displayOn:	true,		//says whether to show or hide a visual representation of the soup
+	debug:		false,
+	validColor:	new RegExp("^rgb\\(\\d{1,2}[0-5]?,\\d{1,2}[0-5]?,\\d{1,2}[0-5]?\\);?$","i")	//yes, I know that invalid rgb colors will pass this test, but this is much easier to code, and uses less processing power
+}
+
+Evo.Creature = function Creature(source, color, food){
+//function Creature() returns a new Creature for the simulation
+
+//check if the source given is a valid
+	if(typeof source != "string")
+	{
+		var source = "";
+	}
+
+//check if the color given is valid
+	if(!Evo.validColor.test(color) )
+	{
+		var r = Math.floor(Math.random() * 256);
+		var g = Math.floor(Math.random() * 256);
+		var b = Math.floor(Math.random() * 256);
+
+		var color = "rgb(" + r.toString() + "," + g.toString() + "," + b.toString() + ");";
+	}
+
+//check if the food given is valid
+	if(typeof food != "number")
+	{
+		var food = 1;
+	}
+
+	return {source: source, color: color, food: food};
+}
+
+Evo.stop = function stop()
+{
+//function stop() ends the simulation
+
+	Evo.on = false;
+	var button = document.getElementById('starter');
+	button.onclick = Evo.startUp;
+	button.value = "Start";
+	clearInterval(Evo.interval);
+}
+
+Evo.startUp = function startUp(wasReset)
+{
+//function start() begins the simulation
+//The parameter "wasReset" is a dummy variable: anything that reduces to "true" will do
+//If "wasReset" reduces to "true", function startUp() will not run the function run() before using setInterval(run)
+//This makes it much less annoying to change the speed of the simulation
+
+	var button = document.getElementById('starter');
+	button.onclick = Evo.stop;
+	button.value = "Stop";
+
+//for debugging and convenience: if I want it to go slow enough that I can react, I don't want it to run immediately after I push a key.
+//this gives me that option
+
+	Evo.on = true;
+	editor.clearSelection();
+
+	if(!wasReset)
+	{
+		Evo.run.call(window);
+	}
+
+//make sure that the population limit is the same as what the visible page says it is
+	Evo.changePopulationLimit();
+	Evo.interval = setInterval(Evo.run, Evo.delay, null);
+}
+
+Evo.run = function run(creatureNumber)
+{
+//function run() is the simulation
+//It "gives life" to the functions in the array "soup" by running each of them
+//If array "soup" is longer than the value of the variable "limit", it removes the first element in the "soup" until the array is short enough, starting with the "creature" at Array index 0
+
+//first, check if Evo should be on
+//if it shouldn't be on, stop it immediately
+	if(!Evo.on)
+	{
+		Evo.stop();
+		return;
+	}
+
+//declare variables
+	var list = soup;
+	var length = +list.length;
+	var r, g, b;
+	var loopCounter = 0, runCounter = 0;
+	var currentCreature = list[loopCounter];
+	var mutate = Evo.mutate;
+	var validColor = Evo.validColor;
+
+	var _Math = Math;
+	var _floor = _Math.floor;
+	var _random = _Math.random;
+
+	var debug = generic.debugLog("function run(" + creatureNumber + ")", Evo.debug);
+
+//is the soup empty? If so, stop the simulation.
+	if(list.length == 0)
+	{
+		Evo.stop();
+		debug.log("the soup is empty, stopping the simulation");
+		debug.show();
+		return;
+	}
+
+//record the total number of generations
+	Evo.generations++;
+
+//is function run() supposed to run only one creature's source code?  If so, change the loop counter and the cached size of the soup
+	if( (typeof creatureNumber == "number") && (creatureNumber >= 0) && (creatureNumber < length) )
+	{
+		loopCounter = creatureNumber;
+		length = creatureNumber + 1;
+	}
+
+//give each creature a chance to reproduce by running its source code
+	while(loopCounter < length)
+	{
+		currentCreature = list[loopCounter];
+
+//check if the current creature is valid
+		if(typeof currentCreature === "object")
+		{
+			if(typeof currentCreature.source != "string")
+			{
+				currentCreature.source = "";
+			}
+
+			if(currentCreature.color && validColor.test(currentCreature.color) )
+			{
+				color = currentCreature.color;
+			}
+
+			else
+			{
+				r = _floor(_random() * 256).toString();
+				g = _floor(_random() * 256).toString();
+				b = _floor(_random() * 256).toString();
+
+				color = "rgb(" + r + "," + g + "," + b + ");";
+				currentCreature.color = color;
+				currentCreature.food = 0;
+			}
+		}
+
+		else
+		{
+			currentCreature = Evo.blankCreature;
+		}
+
+		mutate(loopCounter);	//will it mutate this time?
+
+//be prepared for an error...
+		try
+		{
+			if(currentCreature.food > 0)
+			{
+				runCounter++;		//if every creature has run out of energy, runCounter will equal 0
+				currentCreature.food--;	//the creature eats 1 food each time it runs
+				(Function("i", currentCreature.source) ).call(list[loopCounter], loopCounter);	//compile the source code of currentCreature as a function, run the code, and run it in the context of itself
+			}
+		}
+
+//if there's an error, give the user the option of ending the program
+		catch(e)
+		{
+			if(Evo.debug)
+			{
+				var noStop = confirm('soup[' + loopCounter.toString() + '] has an error\n\nsoup[' + loopCounter.toString() + '].source = \n\n' + list[loopCounter].source + '\n\nDo You Want to Continue the Simulation?');
+
+				if(!noStop)
+				{
+					Evo.stop();	//end the simulation
+					break;	//break out of this loop
+				}
+			}
+		}
+
+//add one to the loop counter and set the current creature to the next one in the soup
+		loopCounter++;
+		currentCreature = list[loopCounter];
+	}
+
+	debug.log("processed " + loopCounter + " creatures out of " + length);
+
+//if the list is bigger than the population limit, cut it back down to the population limit
+
+	length = list.length;	//reset this variable
+	var limit = Evo.populationLimit;
+
+	if(document.getElementById('randomLimit').checked)
+	{
+		limit = Math.ceil(Math.random() * limit);
+	}
+
+	var removals = length - limit;
+
+	if(removals > 0)
+	{
+		list.splice(0,removals);	//deletes as many array items from soup as there are [removals], starting at position 0
+	}
+
+//if no creatures have any food, and thus have not run, stop the simulation
+
+	if(runCounter == 0)
+	{
+		Evo.stop();
+		throw new Error("no creature in the soup was able to run");
+	}
+
+//shows the contents of the array "soup" on screen
+
+	Evo.display.call(null);	//Evo.display() has a bug, try...catch every call of Evo.display to find and fix it
+	debug.show();
+
+//to prevent memory leaks, set all references to NULL
+	list = null;
+	currentCreature = null;
+	mutate = null;
+	validColor = null;
+}
+
+Evo.display = function display()
+{
+//function display() shows the contents of the array [soup] on screen
+
+//show some statistics
+	var list = soup;
+	document.getElementById('currentPopulation').firstChild.nodeValue = list.length.toString();
+	document.getElementById('generations').firstChild.nodeValue = Evo.generations.toString();
+
+//end this function if its not supposed to do its main job
+	if(!Evo.displayOn || Evo.wasReset)
+	{
+		return;
+	}
+
+//show the contents of the soup onscreen
+	var listLength = list.length;
+	var currentCreature;
+	var color;
+	var validColor = Evo.validColor;
+	var length;
+
+	var doc = document;
+	var visibleSoup = document.getElementById("visibleSoup");
+	var parent = document.createElement("div");
+	var child;
+
+//for giving mutated creatures new colors
+	var r = 0;
+	var g = 0;
+	var b = 0;
+
+	var counter = 0;
+	while(counter < listLength)
+	{
+		currentCreature = list[counter];
+
+		if(typeof currentCreature != "object")
+		{
+			currentCreature = Evo.blankCreature;
+		}
+
+		child = doc.createElement("span");
+
+//check if the creature's attributes are valid, and punish the creature if they aren't
+		length = (currentCreature.source && currentCreature.source.length) ? currentCreature.source.length : 1;
+
+		if(currentCreature.color && validColor.test(currentCreature.color) )
+		{
+			color = currentCreature.color;
+		}
+
+		else
+		{
+			r = Math.floor(Math.random() * 256);
+			g = Math.floor(Math.random() * 256);
+			b = Math.floor(Math.random() * 256);
+
+			color = "rgb(" + r.toString() + "," + g.toString() + "," + b.toString() + ");";
+			currentCreature.color = color;
+			currentCreature.food = 0;
+		}
+
+//add a <span> element that is as many pixels wide as the creature's source is long, with the color listed in the [color] attribute
+
+//use conditional compilation to make this compatible with IE
+
+		/*@cc_on
+			@if(@_jscript)
+				child.style.cssText = "width: " + length.toString() + ";background-color:" + color;
+			@else @*/
+				child.setAttribute("style", "width: " + length.toString() + ";background-color:" + color);
+			/*
+			@end
+		@*/
+
+		parent.appendChild(child);
+
+		counter++;
+	}
+
+	if(!visibleSoup.firstChild || (visibleSoup.firstChild.nodeName != "div") || visibleSoup.childNodes[1])
+	{
+		visibleSoup.innerHTML = "<div></div>";
+	}
+
+	if(editor && (editor.creatureNumber >= 0) && (editor.creatureNumber < listLength) )
+	{
+		parent.childNodes[editor.creatureNumber].className == "selected";
+	}
+
+	visibleSoup.replaceChild(parent, visibleSoup.firstChild);	//replace the current visual representation of [soup] with an updated version
+
+//to avoid memory leaks, all references will be set to NULL
+	child = null;
+	parent = null;
+	currentCreature = null;
+	visibleSoup = null;
+	doc = null;
+}
+
+Evo.mutate = function mutate(creatureNumber)
+{
+//function mutate() mutates the function of the creature with the index given to it
+	var debug = generic.debugLog("Function Mutate() started", Evo.debug);
+
+	var localMutationRate = Evo.mutationRate;
+
+	if(!localMutationRate)
+	{
+		debug.log("no mutations will happen this time");
+		debug.show();
+		return;
+	}
+
+	var me = soup[creatureNumber];
+	var text = me.source;
+
+	if(!text)
+	{
+		debug.log("the source code of creature " + creatureNumber + " doesn't exist");
+		debug.show();
+		return;
+	}
+
+	var localMath = Math;
+	var random = localMath.random;
+
+//if a random number == 1, mutate the creature
+
+	if( (random() * localMutationRate) < 1)
+	{
+//mutate the creature a random number of times
+//if(){do...while} is intentional: I don't want to declare the variables "mutation",
+//"character", newCharCode, and newChar if I don't need them
+
+		debug.log("soup[" + creatureNumber.toString() + "] will mutate this time");
+
+		var mutationTypes = 4;
+		var mutation;
+		var sourceLength = text.length;
+		var index;
+		var newCharCode;
+		var newChar;
+		var floor = localMath.floor;
+		var ceil = localMath.ceil;
+
+		do
+		{
+//decide which kind of mutation to make and which character to mutate
+			mutation = ceil(random() * mutationTypes);
+			index = floor(random() * sourceLength);
+
+			debug.log("mutation type: " + mutation);
+			debug.log("character changed: " + index);
+
+//list of possible mutations
+			switch(mutation)
+			{
+//mutation type 1: remove one character
+				case 1:
+				text = text.substring(0, index - 1) + text.substring(index);
+				break;
+
+//mutation type 2: add one random character
+				case 2:
+				newCharCode = floor(random() * 92) + 32;	//92 standard characters to choose from, starting at char code 32 (space character in unicode)
+				newChar = String.fromCharCode(newCharCode);
+				text = text.substring(0, index) + newChar + text.substring(index);
+				break;
+
+//mutation type 3: replace one character with a random character
+				case 3:
+				newCharCode = floor(random() * 92) + 32;	//92 standard characters to choose from, starting at char code 0 + 32
+				newChar = String.fromCharCode(newCharCode);
+				text = text.substring(0, index - 1) + newChar + text.substring(index + 1);
+				break;
+
+//mutation type 4: copy a random character and paste it in a random place
+				case 4:
+//required: 1 variable to hold the position of the character to be copied, 1 variable to hold the position where the character will be copied
+				newCharCode = floor(random() * (sourceLength - 1) );	//character to be copied
+				index = floor(random() * sourceLength);	//position to be copied to
+				text = text.substring(0, index) + text.charAt(newCharCode) + text.substring(index);
+				break;
+			}
+		}
+		while( (random() * localMutationRate) < 1)
+
+		soup[creatureNumber].source = text;
+
+		debug.log("final creature source code:\n" + text);
+		debug.log("function ended");
+		debug.show();
+	}
+}
+
+Evo.changePopulationLimit = function changePopulationLimit()
+{
+//function changePopulationLimit() changes the population limit and removes any non-number characters from the text box with ID=populationLimit
+
+	var element = document.getElementById('populationLimit');
+	var textEntered = element.value.toString();
+	var nonNumbers = /\D/g;
+
+	//only change the text box that shows the population limit if you need to
+	if(nonNumbers.test(textEntered) )
+	{
+		textEntered = textEntered.replace(nonNumbers, "");
+		element.value = textEntered.toString();
+	}
+
+	var number = parseInt(textEntered);
+
+	if(number != NaN && number > 0)
+	{
+		Evo.populationLimit = number;
+	}
+}
+
+Evo.changeSpeed = function changeSpeed()
+{
+//function changeSpeed() changes the speed that the simulation runs at
+	var element = document.getElementById('simulationSpeed');
+	var oldValue = element.value.toString();
+	var nonNumbers = /\D/g;	//search for non-numbers
+	var newValue = oldValue.replace(nonNumbers, "");
+	element.value = newValue.toString();
+	newValue = parseInt(newValue);
+
+//check if the text typed in is a number
+	if(newValue && (newValue != Evo.delay) && (newValue != NaN) && (newValue >= 0) )
+	{
+		Evo.delay = newValue;
+
+		if(Evo.on)
+		{
+			Evo.stop();
+			Evo.startUp(true);
+		}
+
+		if(Evo.debug)
+		{
+			alert('interval will now wait ' + Evo.delay.toString() + ' milliseconds between runs');
+		}
+	}
+}
+
+Evo.runFor = function runFor(number)
+{
+//function runFor() sets or changes the number of generations that Evo will run for
+//if Evo.generationLimit is less than 0, the simulation will continue until stopped
+
+	var debug = generic.debugLog("function runFor() ran", Evo.debug);
+	debug.log("number passed to function: " + number);
+
+	if( (typeof number == "number") && (number >= 0) )
+	{
+		debug.log("the data passed to the function is a valid number; setting the generation limit to " + number);
+		Evo.generationsLeft = number;
+	}
+
+	else
+	{
+		debug.log("the data passed to the function (" + number + ") is not a valid number; looking for a number in the text box");
+		var box = document.getElementById("runFor");
+		var text = box.value.toString();
+
+		text = text.replace(/\D/g, "");
+
+		debug.log("after erasing non-number characters, the text in text box is \"" + text + '"');
+
+		if(text)
+		{
+			var number = +text;
+
+			if(number >= 0)
+			{
+				debug.log("the stuff in the text box (" + text + ") is a valid number; setting Evo to stop after " + number + " generations");
+			}
+
+			else if(number < 0)
+			{
+				debug.log("the stuff in the text box (" + text + ") is a negative number; Evo will run forever until stopped");
+				text = "infinite";
+			}
+
+			Evo.generationsLeft = number;
+		}
+
+		if(box.value.toString() != text)
+		{
+			debug.log("erasing all non-numbers from the text box");
+			box.value = text;
+		}
+	}
+
+	debug.show();
+}
+
+Evo.changeMutationRate = function changeMutationRate(rate)
+{
+//function changeMutationRate() changes the mutation rate
+	var debug = generic.debugLog("function changeMutationRate() ran", Evo.debug);
+	var element = document.getElementById("mutationRate");
+	var newRate = parseInt(element.value);
+
+//allow other parts of the program to change the mutation rate
+	if(typeof rate == "number")
+	{
+		debug.log("the number " + rate + " was passed to function changeMutationRate()");
+		newRate = rate;
+	}
+
+	else if(newRate != NaN)
+	{
+		debug.log("the number typed in the text box (" + newRate + ") will be the new mutation rate");
+		element.value = newRate.toString();
+	}
+
+	else
+	{
+		debug.log("function changeMutationRate() doesn't know what to set the mutation rate to; as far as it can tell, it should change the mutation rate to " + newRate);
+	}
+
+//if the number of mutations is set to 0 or less, no mutations will happen
+	if(newRate <= 0)
+	{
+		debug.log("no mutations will happen");
+		Evo.mutationRate = 0;
+	}
+
+	else
+	{
+		Evo.mutationRate = newRate;
+	}
+
+	debug.show();
+}
+
+Evo.save = function save()
+{
+//function save() converts the contents of the variables [Evo], [editor], and [soup] to a custom XML-ish save file
+//It uses YAML to store settings and creatures
+
+//basic info about this program is commented out and put at the top of the file
+//this info includes the name of the program that created it, the author's name, and a brief description of what this program does
+//in front of each block (settings, creatures, etc.) there is a description of what it does
+
+//declare variables
+	var saveBox = document.getElementById("saveBox");
+
+	var description = ["/*",
+		"Evo",
+		"Evolution Simulator",
+		"Version " + Evo.version,
+		"Created By Erik Popp",
+		"epopp@lavabit.com",
+		"This is a save file for an evolution simulator.",
+		"the encoding format is YAML",
+		"It stores version info in the <info /> tag, runtime settings in the <settings /> tag, creature types in the <types /> tag, creature orders in the <orders /> tag, and any debug information in the <errors /> tag",
+		"*/"
+		];
+
+
+	saveBox.value = generic.toYAML(description) + "\n\n" + generic.toYAML(soup);
+	saveBox.select();
+}
+
+Evo.load = function load()
+{
+//function load() loads a file with all the information needed to continue a session
+alert("function load() ran");
+	return generic.fromYAML(document.getElementById('saveBox') );
+}
+
+
+//end of the [Evo] object, start of the [scheduler] object
+
+/*
+var scheduler = {
+	savedState: {
+		run: new Object(),
+		display: new Object()
+	},
+	next: null
+}
+
+scheduler.kernel = function kernel(override, scope)
+{
+//function kernel() figures out which function to run next, and manages the function queue
+	var debug = generic.debugLog("function kernel() ran", Evo.debug);
+
+	var next = scheduler.next;
+	var savedState = scheduler.savedState;
+
+	debug.log("next = " + next);
+	debug.log("savedState = " + savedState);
+
+	if(typeof override == "function")
+	{
+		debug.log("normal program schedule overridden; function passed to kernel was run");
+		override.call(null);
+	}
+
+	else if(typeof next == "function")
+	{
+		if(!scope)
+		{
+			var scope = null;
+		}
+
+		debug.log("running next function in the global scope");
+		next.call(scope);
+	}
+
+	else if(!next)
+	{
+		debug.log("function kernel() is not supposed to continue; stopping the simulation");
+		debug.log('the next function to run is\"' + next  + '\"');
+		Evo.stop();
+	}
+
+	debug.show();
+}
+*/
+
+
+var soup = new Array();	//create the array [soup]
+
+Evo.blankCreature = Evo.Creature("","transparent", 0);
+var ancestor = Evo.Creature("this.food++; soup.push( {source: this.source, food: 1, color: 'rgb(200,200,200)' } )", "rgb(200,200,200)", 1);
+soup.push( Evo.Creature(ancestor.source, ancestor.color, ancestor.food) );
+
+
+var editor = new Object();	//holds data needed for the creature editor
+editor.creatureNumber = -1;	//holds the array index number of the creature selected
+
+editor.selectCreature = function selectCreature(e)
+{
+//function selectCreature() marks the <span> element clicked as selected,
+//finds the creature that it represents, and puts its contents in the creature editor for editing
+
+//some code will only run when Evo is in debug mode
+	var debug = generic.debugLog("function selectCreature() ran", Evo.debug);
+
+	var element = e.target || window.event.srcElement;	//gets the element clicked in IE or W3C-compliant browsers
+
+	document.getElementById("visibleSoup").className = "editMode";
+
+	debug.log("e = " + e);
+	debug.log("element.nodeName = " + element.nodeName);
+	debug.log("element.innerHTML = " + element.innerHTML);
+	debug.log("element.style.backgroundColor = " + element.style.backgroundColor);
+
+//if the element clicked represents a creature, stop the simulation and selected the creature
+	if(element.nodeName == "SPAN")
+	{
+		Evo.stop();
+
+		var visibleSoup = document.getElementById("visibleSoup");
+
+//make sure that the visual representation of the soup is valid
+		if(!visibleSoup.firstChild || visibleSoup.firstChild.nodeName.toLowerCase() != "div")
+		{
+			Evo.display.call(null);
+		}
+
+		visibleSoup = visibleSoup.firstChild;
+		
+		debug.log("visibleSoup.id = " + visibleSoup.id);
+		debug.log("visibleSoup.nodeName = " + visibleSoup.nodeName);
+
+		var size = soup.length;
+
+		var loopCounter = 0;
+		while((loopCounter < size) && (visibleSoup.childNodes[loopCounter] != element) )
+		{
+			loopCounter++;
+		}
+
+		debug.log("loopCounter = " + loopCounter);
+		debug.log("soup[loopCounter].source = \n\n" + ( (soup[loopCounter]) ? soup[loopCounter].source : null) + "\n");
+	}
+
+//otherwise, deselect the creature
+	else
+	{
+		editor.clearSelection();
+		debug.log("element.nodeName = " + element.nodeName);
+	}
+
+//if the right kind of element was clicked, switch to the creature editor tab, show the 
+//source code of the creature selected, show the color of the creature selected, and remember the number of that creature
+	if(loopCounter < size)
+	{
+		if(editor.creatureNumber != -1)
+		{
+			visibleSoup.childNodes[editor.creatureNumber].className = "";	//deselect the visible element that was selected before
+		}
+
+		if(editor.creatureNumber == loopCounter)
+		{
+			editor.clearSelection();
+		}
+
+		else
+		{
+			editor.creatureNumber = loopCounter;					//remember which creature is selected
+			visibleSoup.childNodes[loopCounter].className = "selected";		//show which creature is selected
+			var creature = soup[loopCounter];
+
+			if(typeof creature.source == "string")
+			{
+				document.getElementById("codeBox").value = creature.source;	//show the source code of the currently selected creature
+			}
+
+//if creature.color is a string, check if it's a valid rgb color
+			if(typeof creature.color == "string")
+			{
+//if so, extract the red, green, and blue parts of an rgb color from it, and show them on the color picker
+				if(Evo.validColor.test(creature.color) || true)
+				{
+					debug.log("" + creature.color + " is a valid rgb color");
+
+					var regx_number = /\d{1,3}/g;
+					var colorsFound = creature.color.match(regx_number);
+
+					debug.log("colors found in the rgb color " + creature.color + ": " + colorsFound);
+
+					document.getElementById("red").value = colorsFound[0];
+					document.getElementById("green").value = colorsFound[1];
+					document.getElementById("blue").value = colorsFound[2];
+
+					editor.colorPreview();
+				}
+
+				else
+				{
+					debug.log(creature.color + " is not a valid rgb color");
+				}
+			}
+
+//if the creature has food, copy it to the food box
+			if(typeof creature.food == "number")
+			{
+				debug.log("creature.food (" + creature.food + ") is a number");
+				document.getElementById("food").value = creature.food.toString();
+			}
+
+			generic.switchTab("editTab");							//switch to the creature editor tab
+		}
+
+		debug.log("function selectCreature() found the creature that the element clicked represented");
+		debug.log("editor.creatureNumber = " + editor.creatureNumber.toString() );
+	}
+
+	else
+	{
+		debug.log("function selectCreature() could not find the creature that the element clicked represented");
+	}
+
+//end of function
+	debug.log("\nfunction ended");
+	debug.show();
+}
+
+editor.clearSelection = function clearSelection(index)
+{
+//function clearSelection() deselects the selected creature
+	var debug = generic.debugLog("function clearSelection() ran", Evo.debug);
+
+	var visibleSoup = document.getElementById("visibleSoup");
+
+	if(!visibleSoup.firstChild || visibleSoup.firstChild.nodeName.toLowerCase() != "div")
+	{
+		Evo.display.call(null);
+	}
+
+	visibleSoup = visibleSoup.firstChild;
+
+	if((editor.creatureNumber >= 0) && (editor.creatureNumber < soup.length))
+	{
+		debug.log("editor.creatureNumber is valid");
+
+		visibleSoup.childNodes[editor.creatureNumber].className = "";
+		editor.creatureNumber = -1;
+		document.getElementById("codeBox").value = "";
+	}
+
+	else
+	{
+		debug.log("\neditor.creatureNumber is not valid");
+	}
+
+//if a number was passed to function clearSelection(), try to deselect the creature at that index
+	if((typeof index == "number") && (index >= 0) && index < soup.length)
+	{
+		visibleSoup.childNodes[index].className = "";
+		document.getElementById("codeBox").value = "";
+
+		debug.log("index (" + index + ") is valid");
+	}
+
+	else
+	{
+		debug.log("index (" + index + ") is not valid");
+	}
+
+//clear the color picker and the food box
+	document.getElementById("food").value = "";
+
+	document.getElementById("colorPreview").setAttribute("style", "");
+	document.getElementById("red").value = "";
+	document.getElementById("green").value = "";
+	document.getElementById("blue").value = "";
+
+	debug.show();
+}
+
+editor.saveChanges = function saveChanges(index)
+{
+//function saveChanges() saves changes made to a creature
+	var debug = generic.debugLog("function saveChanges() ran", Evo.debug);
+
+//make sure that the simulation is not running
+	Evo.stop();
+
+	debug.log("index = " + index + "\neditor.creatureNumber = " + editor.creatureNumber);
+
+//if a creature number has not been passed to to the function, or if the number passed is invalid, use editor.creatureNumber instead
+	if((typeof index != "number") || (index < 0) || (index >= soup.length))
+	{
+		debug.log("no creature number or an invalid creature number was passed to function saveChanges(); copying editor.creatureNumber (" + editor.creatureNumber + ") to index");
+		var index = editor.creatureNumber;
+	}
+
+//if the creature number is valid, get that creature
+	if( (typeof index == "number") && (index >= 0) && (index < soup.length) )
+	{
+		debug.log("number passed to function (" + index + ") is a valid creature number; overwriting existing creature at soup[" + index + "]");
+
+		var color = "rgb(";
+		color += document.getElementById("red").value.toString() + ",";
+		color += document.getElementById("green").value.toString() + ",";
+		color += document.getElementById("blue").value.toString() + ")";
+
+		debug.log("rgb color found in color picker: " + color);
+
+		var source = document.getElementById("codeBox").value.toString();
+		debug.log("source code found in the code box:\n" + soup[index].source);
+
+		var food = +document.getElementById("food").value;
+		debug.log("food found in the food box: " + food);
+
+		soup[index] = Evo.Creature(source, color, food);
+
+		Evo.display();
+	}
+
+	else
+	{
+		debug.log("function saveChanges() couldn't find a valid creature number");
+		debug.log("editor.creatureNumber = " + editor.creatureNumber);
+	}
+
+//end of function
+	debug.log("function ended");
+	debug.show();
+}
+
+editor.addCreature = function addCreature()
+{
+//function addCreature() adds the creature being edited to the soup
+	var debug  = generic.debugLog("function addCreature() started", Evo.debug);
+
+//make sure that the simulation is stopped
+	Evo.stop();
+
+	var codeBox = document.getElementById("codeBox");
+
+	if( (editor.creatureNumber >= 0) && (editor.creatureNumber < soup.length) && codeBox && codeBox.value && (codeBox.value.toString() != soup[editor.creatureNumber].source) )
+	{
+		debug.log("The text in the creature editor's code box is not the same as the source of the selected creature (creature #" + editor.creatureNumber + ").  Creating a new creature using the creature editor's contents as its source code.");
+
+		var source = document.getElementById("codeBox").value.toString();
+
+		var color = "rgb(";
+		color += document.getElementById("red").value.toString() + ",";
+		color += document.getElementById("green").value.toString() + ",";
+		color += document.getElementById("blue").value.toString() + ")";
+
+		var argumentList = [source];
+
+		if(Evo.validColor.test(color) )
+		{
+			argumentList.push(color);
+		}
+
+		soup.push(Evo.Creature.apply(window, argumentList) );
+	}
+
+	else if((editor.creatureNumber >= 0) && (editor.creatureNumber < soup.length) )
+	{
+		debug.log("Copying selected creature.");
+
+		soup.push(new Object() );
+		editor.saveChanges(soup.length - 1);
+	}
+
+	else
+	{
+		debug.log("no creature was selected");
+		soup.push(ancestor);
+	}
+
+Evo.display();
+
+//end of function
+	debug.show();
+}
+
+editor.removeCreature = function removeCreature(index)
+{
+//function removeCreature() removes the creature with the index given to it
+//if it was not given a valid creature index, it will check if a creature is selected
+//if no creature is selected, it will do nothing
+	var debug  = generic.debugLog("function removeCreature()", Evo.debug);
+
+//make sure that the simulation is stopped
+	Evo.stop();
+
+//if [index] is valid, delete the creature at that index, and update the GUI
+	if(isFinite(index)  && (index >= 0) && (index < soup.length) )
+	{
+		debug.log("the creature number given (" + index + ") is a valid creature index; removing it now");
+		soup.splice(index, 1);
+	}
+
+//if a creature is selected, delete it
+	else if( (editor.creatureNumber >= 0) && (editor.creatureNumber < soup.length) )
+	{
+		debug.log("the creature number given (" + index + ") is not valid, checking if a creature is selected");
+		debug.log("A creature (#" + editor.creatureNumber + ") is selected, removing and deselecting creature");
+
+		soup.splice(editor.creatureNumber, 1);
+		editor.creatureNumber = -1;
+	}
+
+	else
+	{
+		debug.log("Function removeCreature() don't know which creature to delete, so no creature was deleted");
+	}
+
+//update the GUI
+	Evo.display();
+
+//end of function
+	debug.show();
+}
+
+editor.colorPreview = function colorPreview(color)
+{
+//function colorPreview() shows the color you're entering as you type it
+	var debug = generic.debugLog("function colorPreview() started", Evo.debug);
+	debug.log("color passed to function: " + color);
+
+	var validColor = Evo.validColor;
+	var colorPreview = document.getElementById("colorPreview");
+
+//if an rgb color was passed to the function, use that
+	if(typeof color == "string" && validColor.test(color) )
+	{
+		debug.log("the color passed to the function is a valid rgb color; setting the background color of the color previewer to " + color);
+
+		var regx_number = /\d{1,3}/g;
+		var colorList = color.match(regx_number);
+
+		debug.log("color numbers found: " + colorList);
+
+		document.getElementById("red").value = colorList[0];
+		document.getElementById("green").value = colorList[1];
+		document.getElementById("blue").value = colorList[2];
+	}
+
+//otherwise, try to extract a color from the color picker
+	else
+	{
+		debug.log("no valid color passed to the function; trying to find a valid rgb color in the color picker");
+		var boxes = [ document.getElementById("red"), document.getElementById("green"), document.getElementById("blue") ];
+		var nonNumbers = /\D/i;
+		var colorStrings = [ boxes[0].value.toString(), boxes[1].value.toString(), boxes[2].value.toString() ];
+		var processedStrings = [];
+
+		for(var counter = 0;counter < 3;counter++)
+		{
+			processedStrings[counter] = colorStrings[counter].replace(nonNumbers, "");
+
+			if(processedStrings[counter] == "")
+			{
+				processedStrings[counter] = "0";
+			}
+		}
+
+		var color = "rgb(" + processedStrings.join(",") + ")";
+
+		debug.log("After erasing all non-numbers, the color is " + color);
+
+		(validColor.test(color) ) ? debug.log(color + " is a valid rgb color") : debug.log(color + " is not a valid rgb color") ;	//record if the color is a valid rgb color
+
+		for(counter = 0; counter < 3;counter++)
+		{
+			if(boxes[counter].value != processedStrings[counter])
+			{
+				boxes[counter].value = processedStrings[counter];
+			}
+		}
+	}
+
+//check one last time if the color is valid
+	if(!validColor.test(color) )
+	{
+		color = "rgb(255,255,255)";
+	}
+
+	debug.log("setting the color sampler's background color to " + color);
+	colorPreview.style.backgroundColor = color;
+
+	debug.show();
+}
+
+
+//beginning of generic functions
+
+var generic = new Object();
+generic.showHide = function showHide(element)
+{
+	if(element && (typeof element.className == "string") )
+	{
+		var regX_visible = /\b\Qvisible\E\b/;
+		var regX_hidden = /\b\Qhidden\E\b/;
+		var CSS = element.className.toString();
+
+		if(CSS.search(regX_visible) > -1)
+		{
+			CSS.replace(regX_visible, "hidden");
+		}
+
+		else if(CSS.search(regX_hidden) > -1)
+		{
+			CSS.replace(regX_hidden, "visible");
+		}
+
+		element.className = CSS;
+	}
+}
+
+generic.switchTab = function switchTab(id)
+{
+//function switchTab() changes the visible tab to the one with ID=checked_radio_button.value
+
+	var trackerText = "Function switchTab() ran\n";
+
+//initialize variables
+	var regX_visible = /\bvisible\b/;
+	var regX_hidden = /\bhidden\b/;
+	var CSS = "";
+	var currentElement = document.getElementById("tabTops").firstChild;
+	var currentTab = document.getElementById(currentElement.value);
+
+//if text is passed to function switchTab() and that text is the ID of a valid element,
+//id_given will be TRUE
+
+	var id_given = (typeof id == "string" && document.getElementById(id) && document.getElementById(id).parentNode.id == "tabTops");
+
+//loop through the tabs and make the right one visible
+	while(currentElement)
+	{
+		if(currentElement.type == "radio")
+		{
+//get the DOM element with the ID stored in currentElement.value
+
+			currentTab = document.getElementById(currentElement.value);
+			CSS = currentTab.className.toString();
+
+//if the id of a valid form element was passed to function switchTab(),
+//and if currentElement.id == that id, check the current element
+
+			if(id_given && currentElement.id == id)
+			{
+				currentElement.checked = true;
+			}
+
+//if the id of a valid form element was passed to function switchTab(),
+//and if currentElement != that id, uncheck the current element
+
+			else if(id_given)
+			{
+				currentElement.checked = false;
+			}
+
+//if the current element is checked, prepare to make it visible
+			if(currentElement.checked == true)
+			{
+				CSS = CSS.replace(regX_hidden, "visible");
+			}
+
+//otherwise, prepare to hide that element
+			else
+			{
+				CSS = CSS.replace(regX_visible, "hidden");
+			}
+
+			currentTab.className = CSS;	//show or hide currentElement
+		}
+
+		currentElement = currentElement.nextSibling;
+	}
+}
+
+generic.isEnter = function isEnter(e)
+{
+	var debug = generic.debugLog("function isEnter() ran\ne = " + e, Evo.debug);
+
+	var e = e || window.event;
+
+	debug.log("e.keyCode = " + e.keyCode);
+	debug.show();
+
+	if(e.keyCode == 13)
+	{
+		return true;
+	}
+
+	else
+	{
+		return false;
+	}
+}
+
+generic.debugLog = function debugLog(text, on)
+{
+//function debugLog() returns a [debugLog] object
+//a [debugLog] object has the following properties:
+//on		if set to TRUE, methods of a [debugLog] object will work
+//message	all text logged so far
+//log		adds text to the message property and formats it for easy reading
+//show		alert([debugLog].message)
+
+	text = text + "\n";
+	on = (on) ? true:false;
+
+	return {
+		message:	text,
+		on:		on,
+		show:		function()	{if(this.on){alert(this.message) } },
+		log:		function(stuff)	{if(this.on){this.message += "\n" + stuff} }
+		}
+}
+
+generic.validate = function validate(arg, accept, erase)
+{
+//function validate() is meant to run as an event handler, but can be run as a string method or on its own
+//it processes the string passed as its first argument, and returns the result
+
+//it requires two argument, the last is optional:
+//[arg]:	A string to validate according to the first two parameters, or a reference to a text box.  The text box can be either a textarea or an input type="text"
+//[accept]:	a string or regular expression that the text must match after all characters matching the last parameter have been removed
+//[erase]:	optional.  A string or regular expression. Any match will be deleted
+
+	if(arg.nodeName && (typeof arg.value === "string") )
+	{
+		var element = arg;	//[arg] is an HTML text box
+		var text = arg.value.toString();	//get the text to validate
+	}
+
+	else if(typeof arg === "string")
+	{
+		var text = arg;
+	}
+
+	else
+	{
+		throw new Error("function validate(" + arg + ", " + accept + ", " + erase + "): neither a string nor an HTML text box was passed as the first parameter");
+	}
+
+	if(erase)
+	{
+		text = text.replace(erase, "");	//filter the text through the regular expression(s) provided
+	}
+
+//if a second parameter was not given, throw an error
+	if(!accept)
+	{
+		throw new Error("function validate(" + arg + ", " + accept + ", " + remove + "): a second parameter is required.  It can be a regular expression or a string.");
+	}
+
+	if(typeof accept === "string")
+	{
+		accept = new RegExp(accept);	//if the second parameter is a string, convert it to a regular expression
+	}
+
+	var valid = accept.test(text);
+
+	if(element && (element.value != text) )
+	{
+		element.value = text;	//if the first parameter is an HTML text box, replace its value if needed
+	}
+
+	return (valid) ? text : "";
+}
+
+//add a proper Object.toString()
+Object.prototype.toString = function(separator)
+{
+	var prop;
+	var temp = ["{"];
+	var length = 1;
+
+	if(typeof separator != "string")
+	{
+		var separator = "\n";
+	}
+
+	for(prop in this)
+	{
+		if(this.hasOwnProperty(prop) )
+		{
+			temp[length] = prop + ": " + this[prop];
+			length++;
+		}
+	}
+
+	temp.push("}");
+
+	return temp.join(separator);
+}
+
+generic.toYAML = function(obj)
+{
+//this converts JavaScript Arrays and/or Objects to YAML
+
+return obj;
+}
+
+generic.fromYAML = function(txt)
+{
+//this converts YAML into JavaScript Arrays and/or Objects
+
+	return txt;
+}
+
+</script>
+
+<style>
+
+/* tag styles */
+
+body {
+	background-color: white;
+	background-image: none;
+}
+
+td {
+	text-align: right;
+	border: 1px solid rgb(200,200,200);
+	border-top-style: none;
+	border-bottom-style: none;
+	margin: 3px 0;
+	padding: 3px 5px;
+}
+
+input[type="text"] {
+	width: 5em;
+}
+
+span {
+	min-width: 1px;
+	margin: 1px;
+	border: 1px solid transparent;
+}
+
+/* id styles */
+
+#visibleSoup, .visibleSoup {
+	border: 5px solid rgb(200,200,200);
+	margin: 0;
+	padding: 1px;
+	width: 99%;
+	height: 54%;
+	word-wrap: break-word;
+	overflow: scroll;
+}
+
+#visibleSoup span {
+	float: left;
+	margin: 0;
+	height: 2px;
+	font-size: 1px;
+}
+
+#visibleSoup span:hover, .selected {
+	border: 1px solid orange;
+}
+
+#codeBox, #commandPrompt {
+	width: 100%;
+}
+
+#commandBox {
+	width: 80%;
+}
+
+#tabContainer {
+	height: 6em;
+}
+
+#editor, #commandPrompt {
+	height: 100%;
+}
+
+#editor, #editor * {
+	border: 1px solid rgb(200,200,200);
+}
+
+#colorPreview {
+	height: 2em;
+	border: 1px solid rgb(200,200,200);
+	padding-left: 0.5em;
+	padding-right: 0.5em;
+	margin-right: 0.5em;
+	background-color: white;
+}
+
+#red, #green, #blue {
+	width: 4em;
+	border-width: 2px;
+	border-style: solid;
+}
+
+#red {
+	border-color: rgb(150,0,0);
+}
+
+#green {
+	border-color: rgb(0,150,0);
+}
+
+#blue {
+	border-color: rgb(0,0,150);
+}
+
+#saveLoad, #saveBox {
+	width: 100%;
+}
+
+/* class styles */
+
+.visible {
+	display: block;
+}
+
+.hidden {
+	display: none;
+}
+
+.left {text-align: left}
+.right {text-align: right}
+
+.noBorders {
+	border: 0px none transparent;
+}
+
+.green {
+	background-color: rgb(0,200,0);
+}
+
+</style>
+</head>
+<body onload="document.getElementById('starter').focus(); Evo.display.call(null);">
+
+<form action="javascript:" id="controls">
+
+<div id="tabTops">
+<input type="radio" name="tabTops" onclick="generic.switchTab(); editor.clearSelection();" value="runTime" checked>Runtime
+<input id="editTab" type="radio" name="tabTops" onclick="generic.switchTab()" value="editor">Creature Editor
+<input type="radio" name="tabTops" onclick="generic.switchTab(); editor.clearSelection();" value="commandPrompt">Command Prompt
+<input type="radio" name="tabTops" onclick="generic.switchTab(); editor.clearSelection();" value="saveLoad">Save/Load State
+&nbsp;&nbsp;&nbsp;<input type="checkbox" id="debug" onclick="Evo.debug = this.checked;">Debug Mode
+&nbsp;&nbsp;&nbsp;<a href="javascript: alert('next: fix rouge code bug');">Notes</a>
+</div>
+
+<div id="tabContainer">
+
+<div id="runTime" class="visible">
+<input type="button" id="starter" onclick="Evo.startUp();" value="Start">
+<button type="button" id="reset" onclick="soup = [Evo.Creature(ancestor.source, ancestor.color, ancestor.food) ]; Evo.display.call(null)">Reset</button>
+&nbsp;&nbsp;<span>Stop After <input type="text" id="runFor" onkeyup="Evo.runFor()" onclick="if(this.value == 'infinite'){this.value = ''}" value="infinite"> Generations</span>
+<br>
+<table id="options">
+<tr>
+<td>Mutation Rate: 1 / <input id="mutationRate" type="text" value="10" onkeyup="Evo.changeMutationRate()"></td>
+<td>&nbsp;</td>
+<td><input type="checkbox" id="randomLimit"><abbr title="If checked, the population limit entered will be the maximum population limit">Random Population Limit</abbr></td>
+<td class="left">Total Generations: <span id="generations" class="noBorders right">&nbsp;</span></td>
+</tr>
+
+<tr>
+<td>Population Limit:
+<input type="text" id="populationLimit" value="50" onkeyup="Evo.changePopulationLimit()" style="text-align: left"></td>
+
+<td>Delay in <abbr title="milliseconds">MS</abbr>:
+<input type="text" id="simulationSpeed" value="0" onkeyup="Evo.changeSpeed()"></td>
+
+<td class="left"><input type="checkbox" id="displayOn" checked onclick="Evo.displayOn = this.checked; var element = document.getElementById('visibleSoup'); if(this.checked){Evo.display.call(window); element.className = 'visible'} else {element.className = 'hidden'; element.innerHTML = ''}">Show Creatures</td>
+<td class="left">Current Population: <span id="currentPopulation" class="noBorders right">&nbsp;</span></td>
+</tr>
+</table>
+</div>
+
+<div id="editor" class="hidden">
+<textarea id="codeBox"></textarea>
+
+<span id="colorPreview" class="left">
+Color: 
+<input id="red" type="text" value="" maxLength="3" onkeyup="editor.colorPreview();">
+<input id="green" type="text" value="" maxlength="3" onkeyup="editor.colorPreview();">
+<input id="blue" type="text" value="" maxlength="3" onkeyup="editor.colorPreview();">
+</span>
+
+Food: <input id="food" type="text" onkeyup="generic.validate(document.getElementById('food'), /\d*/g, /\D+/g)" value="">
+
+<span style="text-align: right;">
+<button id="saveChanges" type="button" onclick="editor.saveChanges()">Save Changes</button>
+<button id="plus1" type="button" onclick="editor.addCreature()">Add Copy to Soup</button>
+<button id="minus1" type="button" onclick="editor.removeCreature()">Remove Creature</button>
+<button id="run1" typ="button" onclick="Evo.run(editor.creatureNumber)">Run This Creature's Source Code</button>
+</span>
+
+</div>
+
+<div id="commandPrompt" class="hidden">
+<textarea id="commandBox"></textarea>
+<button id="runCommand" onclick="eval(document.getElementById('commandBox').value.toString() )">Run</button>
+</div>
+
+<div id="saveLoad" class="hidden">
+<textarea id="saveBox"></textarea>
+<br>
+<button id="save" type="button" onclick="Evo.save();">Save</button>
+<button id="load" type="button" onclick="Evo.load();">Load</button>
+</div>
+
+</div>
+
+</form>
+
+<div id="visibleSoup" onclick="editor.selectCreature(event)"><div></div></div>
+
+</body></html>
