@@ -114,6 +114,9 @@ Evo.run = function run(creatureNumber)
 	var _floor = _Math.floor;
 	var _random = _Math.random;
 
+	var backupPush = Array.prototype.push;
+	var backupSoup = soup;
+
 	var debug = generic.debugLog("function run(" + creatureNumber + ")", Evo.debug);
 
 //is the soup empty? If so, stop the simulation.
@@ -197,6 +200,10 @@ Evo.run = function run(creatureNumber)
 				}
 			}
 		}
+
+//prevent random code from breaking the simulator by overwriting some common problem areas with known good references to them.
+		soup = backupSoup;
+		soup.push = backupPush;
 
 //add one to the loop counter and set the current creature to the next one in the soup
 		loopCounter++;
