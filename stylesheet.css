@@ -1,0 +1,128 @@
+/* tag styles */
+
+body {
+	background-color:						white;
+	background-image:						none;
+}
+
+td {
+	text-align:									right;
+	border:											1px solid rgb(200,200,200);
+	border-top-style:						none;
+	border-bottom-style:				none;
+	margin:											3px 0;
+	padding:										3px 5px;
+}
+
+input[type="text"] {
+	width:											5em;
+}
+
+span {
+	min-width:									1px;
+	margin:											1px;
+	border:											1px solid transparent;
+}
+
+/* id styles */
+
+#visibleSoup, .visibleSoup {
+	border:											5px solid rgb(200,200,200);
+	margin:											0;
+	padding:										1px;
+	width:											99%;
+	height:											54%;
+	word-wrap:									break-word;
+	overflow:										scroll;
+}
+
+#visibleSoup span {
+	float:											left;
+	margin:											0;
+	height:											2px;
+	font-size:									1px;
+}
+
+#visibleSoup span:hover, .selected {
+	border:											1px solid orange;
+}
+
+#codeBox, #commandPrompt {
+	width:											100%;
+}
+
+#commandBox {
+	width:											80%;
+}
+
+#tabContainer {
+	height:											6em;
+}
+
+#editor, #commandPrompt {
+	height:											100%;
+}
+
+#editor, #editor * {
+	border:											1px solid rgb(200,200,200);
+}
+
+#colorPreview {
+	height:											2em;
+	border:											1px solid rgb(200,200,200);
+	padding-left:								0.5em;
+	padding-right:							0.5em;
+	margin-right:								0.5em;
+	background-color:						white;
+}
+
+#red, #green, #blue {
+	width:											4em;
+	border-width:								2px;
+	border-style:								solid;
+}
+
+#red {
+	border-color:								rgb(150,0,0);
+}
+
+#green {
+	border-color:								rgb(0,150,0);
+}
+
+#blue {
+	border-color:								rgb(0,0,150);
+}
+
+#soupDump {
+  width:											100%;
+	height:											20%;
+}
+
+/* class styles */
+
+.visible {
+	display:										block;
+}
+
+.hidden {
+	display:										none;
+}
+
+.left {
+	text-align:									left;
+
+}
+
+.right {
+	text-align:									right;
+}
+
+.noBorders {
+	border:											0px none transparent;
+}
+
+.green {
+	background-color:						rgb(0,200,0);
+}
+
