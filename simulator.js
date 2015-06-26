@@ -138,6 +138,8 @@ Simulator.display = function display()
 {
 //function display() shows the contents of the array [soup] on screen
 
+	var debug = Vatican.debugLog("Simulator.display()", Simulator.debug);
+
 //show some statistics
 	var list = soup;
 	document.getElementById('currentPopulation').firstChild.nodeValue = list.length.toString();
@@ -166,13 +168,16 @@ Simulator.display = function display()
 	var g = 0;
 	var b = 0;
 
-	var counter = 0;
-	while(counter < listLength)
+	debug.log("listLength = " + listLength);
+
+	for(var counter=0; counter < listLength; counter++)
 	{
 		currentCreature = list[counter];
+		debug.log("creature #" + counter + " = " + currentCreature);
 
 		if(typeof currentCreature != "object")
 		{
+			debug.log("creature #" + counter + " isn't an object, using a generic blank creature as a placeholder");
 			currentCreature = Simulator.blankCreature;
 		}
 
@@ -211,8 +216,6 @@ Simulator.display = function display()
 		@*/
 
 		parent.appendChild(child);
-
-		counter++;
 	}
 
 	if(!visibleSoup.firstChild || (visibleSoup.firstChild.nodeName != "div") || visibleSoup.childNodes[1])
@@ -233,6 +236,8 @@ Simulator.display = function display()
 	currentCreature = null;
 	visibleSoup = null;
 	doc = null;
+
+	debug.show();
 }
 
 Simulator.mutate = function mutate(creatureNumber)
@@ -355,12 +360,14 @@ Simulator.run = function run(creatureNumber)
 	var backupSoup = soup;
 
 	var debug = Vatican.debugLog("function run(" + creatureNumber + ")", Simulator.debug);
+	debug.log("length = " + length);
+	debug.log("creatureNumber = " + creatureNumber);
 
-//is function run() supposed to run only one creature's source code?  If so, change the loop counter and the cached size of the soup
+	//is function run() supposed to run only one creature's source code?  If so, change the loop counter and the cached size of the soup
 	if( (typeof creatureNumber == "number") && (creatureNumber >= 0) && (creatureNumber < length) )
 	{
 		debug.log("Simulator.run(" + creatureNumber + "): running only creature #" + creatureNumber + ", instead of all creatures in soup");
-	loopCounter = creatureNumber;
+		loopCounter = creatureNumber;
 		length = creatureNumber + 1;
 		run1Creature = true;
 		runCounter = -1;
