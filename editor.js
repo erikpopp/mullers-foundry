@@ -183,7 +183,7 @@ editor.removeCreature = function removeCreature(index)
 //make sure that the simulation is stopped
 	Simulator.stop();
 
-//if [index] is valid, delete the creature at that index, and update the GUI
+//if the creature index given is valid, delete the creature at that index
 	if( (typeof index === "number") && (index >= 0) && (index < soup.length) )
 	{
 		debug.log("the creature number given (" + index + ") is a valid creature index; removing it now");

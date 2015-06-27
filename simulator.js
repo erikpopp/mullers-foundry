@@ -118,11 +118,7 @@ Simulator.Creature = function Creature(source, color, food){
 //check if the color given is valid
 	if(!Simulator.validColor.test(color) )
 	{
-		var r = Math.floor(Math.random() * 256);
-		var g = Math.floor(Math.random() * 256);
-		var b = Math.floor(Math.random() * 256);
-
-		var color = "rgb(" + r.toString() + "," + g.toString() + "," + b.toString() + ");";
+		var color = "rgb(0,0,0);";
 	}
 
 //check if the food given is valid
@@ -131,6 +127,8 @@ Simulator.Creature = function Creature(source, color, food){
 		var food = 1;
 	}
 
+//I'm intentionally not returning an object of type Creature, since its descendants won't be.
+//Instead, I return an object that's indistinguishable from its non-mutant descendants
 	return {source: source, color: color, food: food};
 }
 
