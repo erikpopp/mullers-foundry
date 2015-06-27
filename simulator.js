@@ -2,11 +2,11 @@
 //I hid all parts of the simulation inside of global objects to make it less likely that rogue code will break the simulation
 
 var Simulator = {
-	debug:						false,
+	debug:						true,
 	delay:						0,					//number of milliseconds to wait before the next generation
 	displayOn:				true,				//says whether to show or hide a visual representation of the soup
 	generations:			0,
-	generationsLeft:	-1,
+	generationsLeft:	-1,					//when running the simulator for a certain number of generations, this is the number of generations left to run.  For unlimited generations (the default), set to something less than 0
 	interval:					undefined,	//holds a reference to the interval created by setInterval()
 	limit:						5,					//population limit
 	mutationRate:			10,					//chance of mutation = 1 / [mutationRate]
@@ -184,21 +184,28 @@ Simulator.display = function display()
 		child = doc.createElement("span");
 
 //check if the creature's attributes are valid, and punish the creature if they aren't
-		length = (currentCreature.source && currentCreature.source.length) ? currentCreature.source.length : 1;
-
-		if(currentCreature.color && validColor.test(currentCreature.color) )
+		if(typeof currentCreature.source === "string")
 		{
+			debug.log("source of current creature (#" + counter + ') is a string');
+			length = currentCreature.source.length;
+		}
+
+		else
+		{
+			debug.log("currentCreature.source is not a string, but is instead a " + typeof currentCreature.source + ".  Defaulting to 1 (creature #" + counter + ')');
+			length = 1;
+		}
+
+		if( (typeof currentCreature.color === "string") && validColor.test(currentCreature.color) )
+		{
+			debug.log('currentCreature.color ("' + currentCreature.color + '") is a valid rgb color');
 			color = currentCreature.color;
 		}
 
 		else
 		{
-			r = Math.floor(Math.random() * 256);
-			g = Math.floor(Math.random() * 256);
-			b = Math.floor(Math.random() * 256);
-
-			color = "rgb(" + r.toString() + "," + g.toString() + "," + b.toString() + ");";
-			currentCreature.color = color;
+			debug.log('currentCreature.color ("' + currentCreature.color + '") is not a valid rgb color, setting color to black and killing it');
+			currentCreature.color = "rgb(0,0,0)";
 			currentCreature.food = 0;
 		}
 
@@ -208,9 +215,12 @@ Simulator.display = function display()
 
 		/*@cc_on
 			@if(@_jscript)
-				child.style.cssText = "width: " + length.toString() + ";background-color:" + color;
+				debug.log('browser is IE, setting style using IT's element.style.cssText to "' + length.toString() + 'px"');
+				debug.log('also setting background color to "' + color + '"');
+				child.style.cssText = "width: " + length.toString() + "px;background-color:" + color;
 			@else @*/
-				child.setAttribute("style", "width: " + length.toString() + ";background-color:" + color);
+				debug.log('browser is not IE, setting style using industry standard element.setAttribute("style", "width: ' + length.toString() + '; background-color: '+ color + ')');
+				child.setAttribute("style", "width: " + length.toString() + "px; background-color: " + color);
 			/*
 			@end
 		@*/
@@ -218,16 +228,21 @@ Simulator.display = function display()
 		parent.appendChild(child);
 	}
 
+//if a creature is selected, highlight it
+	creatureSelected = editor.creatureNumber;
+	if( (creatureSelected >= 0) && (creatureSelected < length) )
+	{
+		debug.log("creature #" + creatureSelected + " is selected, highlighting it on-screen");
+		parent.getElementsByTagName("span")[creatureSelected].className = "selected";
+	}
+
 	if(!visibleSoup.firstChild || (visibleSoup.firstChild.nodeName != "div") || visibleSoup.childNodes[1])
 	{
-		visibleSoup.innerHTML = "<div></div>";
+		debug.log("contents of visible representation of soup aren't quite correct.  This might happen if you put white space or comments inside of it.  Replacing with an empty <div>");
+		visibleSoup.innerHTML = '<div></div>';
 	}
 
-	if(editor && (editor.creatureNumber >= 0) && (editor.creatureNumber < listLength) )
-	{
-		parent.childNodes[editor.creatureNumber].className == "selected";
-	}
-
+	debug.log("updating visible representation of soup");
 	visibleSoup.replaceChild(parent, visibleSoup.firstChild);	//replace the current visual representation of [soup] with an updated version
 
 //to avoid memory leaks, all references will be set to NULL

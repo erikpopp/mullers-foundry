@@ -2,7 +2,7 @@
 //scripts for creature editor
 
 var editor = new Object();	//holds data needed for the creature editor
-editor.creatureNumber = -1;	//holds the array index number of the creature selected
+editor.creatureNumber = -1;	//holds the array index number of the creature selected.  If nothing is selected, set to something less than 0
 
 editor.addCreature = function addCreature()
 {
