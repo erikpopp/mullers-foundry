@@ -178,13 +178,13 @@ editor.removeCreature = function removeCreature(index)
 //function removeCreature() removes the creature with the index given to it
 //if it was not given a valid creature index, it will check if a creature is selected
 //if no creature is selected, it will do nothing
-	var debug  = Vatican.debugLog("function removeCreature()", Simulator.debug);
+	var debug = Vatican.debugLog("function removeCreature()", Simulator.debug);
 
 //make sure that the simulation is stopped
 	Simulator.stop();
 
 //if [index] is valid, delete the creature at that index, and update the GUI
-	if(isFinite(index)  && (index >= 0) && (index < soup.length) )
+	if( (typeof index === "number") && (index >= 0) && (index < soup.length) )
 	{
 		debug.log("the creature number given (" + index + ") is a valid creature index; removing it now");
 		soup.splice(index, 1);
