@@ -588,7 +588,7 @@ Simulator.startUp = function startUp(wasReset)
 //this gives me that option
 
 	Simulator.on = true;
-	editor.clearSelection();
+	editor.deSelectCreature();
 
 	if(!wasReset)
 	{

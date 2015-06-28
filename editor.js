@@ -50,10 +50,10 @@ editor.addCreature = function addCreature()
 	}
 }
 
-editor.clearSelection = function clearSelection(index)
+editor.deSelectCreature = function deSelectCreature(index)
 {
-//function clearSelection() deselects the selected creature
-	var debug = Vatican.debugLog("function clearSelection() ran", Simulator.debug);
+//function deSelectCreature() deselects the selected creature
+	var debug = Vatican.debugLog("function deSelectCreature() ran", Simulator.debug);
 
 	var visibleSoup = document.getElementById("visibleSoup");
 
@@ -78,7 +78,7 @@ editor.clearSelection = function clearSelection(index)
 		debug.log("\neditor.creatureNumber is not valid");
 	}
 
-//if a number was passed to function clearSelection(), try to deselect the creature at that index
+//if a number was passed to function deSelectCreature(), try to deselect the creature at that index
 	if((typeof index == "number") && (index >= 0) && index < soup.length)
 	{
 		visibleSoup.childNodes[index].className = "";
@@ -179,25 +179,29 @@ editor.removeCreature = function removeCreature(index)
 //if it was not given a valid creature index, it will check if a creature is selected
 //if no creature is selected, it will do nothing
 	var debug = Vatican.debugLog("function removeCreature()", Simulator.debug);
+	var deleteEnabled = false;	//only enable deletion if the number passed is a valid creature number
+	var creatureToDelete;
 
 //make sure that the simulation is stopped
 	Simulator.stop();
 
-//if the creature index given is valid, delete the creature at that index
+//if the creature index given is valid, queue it for deletion
 	if( (typeof index === "number") && (index >= 0) && (index < soup.length) )
 	{
 		debug.log("the creature number given (" + index + ") is a valid creature index; removing it now");
-		soup.splice(index, 1);
+		creatureToDelete = index;
+		deleteEnabled = true;
 	}
 
-//if a creature is selected, delete it
+//if a creature is selected, queue it for deletion
 	else if( (editor.creatureNumber >= 0) && (editor.creatureNumber < soup.length) )
 	{
 		debug.log("the creature number given (" + index + ") is not valid, checking if a creature is selected");
 		debug.log("A creature (#" + editor.creatureNumber + ") is selected, removing and deselecting creature");
 
-		soup.splice(editor.creatureNumber, 1);
+		creatureToDelete = editor.creatureNumber;
 		editor.creatureNumber = -1;
+		deleteEnabled = true;
 	}
 
 	else
@@ -205,6 +209,13 @@ editor.removeCreature = function removeCreature(index)
 		debug.log("Function removeCreature() don't know which creature to delete, so no creature was deleted");
 	}
 
+//if a valid creature was found, delete it
+	if(deleteEnabled)
+	{
+		debug.log("found a valid creature to delete; deleting creature #" + creatureToDelete);
+		soup.splice(creatureToDelete, 1);
+	}
+	
 //update the GUI
 	Simulator.display();
 
@@ -263,132 +274,106 @@ editor.saveChanges = function saveChanges(index)
 	debug.show();
 }
 
-editor.selectCreature = function selectCreature(e)
+editor.selectCreature = function selectCreature(event)
 {
 //function selectCreature() marks the <span> element clicked as selected,
 //finds the creature that it represents, and puts its contents in the creature editor for editing
 
-//some code will only run when Simulator is in debug mode
 	var debug = Vatican.debugLog("function selectCreature() ran", Simulator.debug);
 
-	var element = e.target || window.event.srcElement;	//gets the element clicked in IE or W3C-compliant browsers
+	var creature;				//holds reference to actual creature
+	var creatureIndex;	//holds array index of both creature and element that visually represents it
+	var creatureElement = event.target || window.event.srcElement;	//gets the element clicked in IE or W3C-compliant browsers
+	var visibleSoup;
 
-	document.getElementById("visibleSoup").className = "editMode";
+	debug.log("event = " + event);
+	debug.log("creatureElement.nodeName = " + creatureElement.nodeName);
+	debug.log("creatureElement.innerHTML = " + creatureElement.innerHTML);
+	debug.log("creatureElement.style.backgroundColor = " + creatureElement.style.backgroundColor);
 
-	debug.log("e = " + e);
-	debug.log("element.nodeName = " + element.nodeName);
-	debug.log("element.innerHTML = " + element.innerHTML);
-	debug.log("element.style.backgroundColor = " + element.style.backgroundColor);
-
-//if the element clicked represents a creature, stop the simulation and selected the creature
-	if(element.nodeName == "SPAN")
+//if the element clicked represents a creature, stop the simulation and select the creature
+	if(creatureElement.nodeName == "SPAN")
 	{
 		Simulator.stop();
 
-		var visibleSoup = document.getElementById("visibleSoup");
+		visibleSoup = document.getElementById("visibleSoup").firstChild;	//be careful when changing this.  If creatureIndex becomes less than zero, you're asking for its array index in an element other than its immediate parent
 
-//make sure that the visual representation of the soup is valid
-		if(!visibleSoup.firstChild || visibleSoup.firstChild.nodeName.toLowerCase() != "div")
-		{
-			Simulator.display.call(null);
-		}
-
-		visibleSoup = visibleSoup.firstChild;
-		
 		debug.log("visibleSoup.id = " + visibleSoup.id);
 		debug.log("visibleSoup.nodeName = " + visibleSoup.nodeName);
+		debug.log("Array.prototype.indexOf.call(visibleSoup.children, creatureElement) = " + Array.prototype.indexOf.call(visibleSoup.children, creatureElement) );
 
-		var size = soup.length;
+//get index of current element, working under the assumption that its only child elements are <span> elements (should hold true if Simulator.display() has run at least once
+//credit goes to http://stackoverflow.com/questions/5913927/get-child-node-index
+		creatureIndex = Array.prototype.indexOf.call(visibleSoup.children, creatureElement);
+		debug.log("creatureIndex = " + creatureIndex);
 
-		var loopCounter = 0;
-		while((loopCounter < size) && (visibleSoup.childNodes[loopCounter] != element) )
+//this is mainly to prevent me from being confused if I reintroduce a bug
+		if(creatureIndex >= 0)
 		{
-			loopCounter++;
+			creature = soup[creatureIndex];
+			debug.log("creature #" + creatureIndex + " = " + creature);
 		}
 
-		debug.log("loopCounter = " + loopCounter);
-		debug.log("soup[loopCounter].source = \n\n" + ( (soup[loopCounter]) ? soup[loopCounter].source : null) + "\n");
+		else
+		{
+			debug.log("creatureIndex is less than zero.  last time this happened, I was accidentally asking for the index of a grandchild element in its grandparent");
+			debug.log('document.getElementById("visibleSoup").outerHTML = \n' + document.getElementById("visibleSoup").outerHTML);
+		}
 	}
 
 //otherwise, deselect the creature
 	else
 	{
-		editor.clearSelection();
-		debug.log("element.nodeName = " + element.nodeName);
+		editor.deSelectCreature();
+		debug.log("creatureElement.nodeName = " + creatureElement.nodeName);
+		debug.show();
+		return;
 	}
 
-//if the right kind of element was clicked, switch to the creature editor tab, show the 
-//source code of the creature selected, show the color of the creature selected, and remember the number of that creature
-	if(loopCounter < size)
+//if creature.color is a string, check if it's a valid rgb color
+	if(typeof creature.color == "string")
 	{
-		if(editor.creatureNumber != -1)
+//if so, extract the red, green, and blue parts of an rgb color from it, and show them on the color picker
+		if(Simulator.validColor.test(creature.color) || true)
 		{
-			visibleSoup.childNodes[editor.creatureNumber].className = "";	//deselect the visible element that was selected before
-		}
+			debug.log('"' + creature.color + '" is a valid rgb color');
 
-		if(editor.creatureNumber == loopCounter)
-		{
-			editor.clearSelection();
+			var regx_number = /\d{1,3}/g;
+			var colorsFound = creature.color.match(regx_number);
+
+			debug.log("colors found in the rgb color " + creature.color + ": " + colorsFound);
+
+			document.getElementById("red").value = colorsFound[0];
+			document.getElementById("green").value = colorsFound[1];
+			document.getElementById("blue").value = colorsFound[2];
+
+			editor.colorPreview();
 		}
 
 		else
 		{
-			editor.creatureNumber = loopCounter;					//remember which creature is selected
-			visibleSoup.childNodes[loopCounter].className = "selected";		//show which creature is selected
-			var creature = soup[loopCounter];
-
-			if(typeof creature.source == "string")
-			{
-				document.getElementById("codeBox").value = creature.source;	//show the source code of the currently selected creature
-			}
-
-//if creature.color is a string, check if it's a valid rgb color
-			if(typeof creature.color == "string")
-			{
-//if so, extract the red, green, and blue parts of an rgb color from it, and show them on the color picker
-				if(Simulator.validColor.test(creature.color) || true)
-				{
-					debug.log("" + creature.color + " is a valid rgb color");
-
-					var regx_number = /\d{1,3}/g;
-					var colorsFound = creature.color.match(regx_number);
-
-					debug.log("colors found in the rgb color " + creature.color + ": " + colorsFound);
-
-					document.getElementById("red").value = colorsFound[0];
-					document.getElementById("green").value = colorsFound[1];
-					document.getElementById("blue").value = colorsFound[2];
-
-					editor.colorPreview();
-				}
-
-				else
-				{
-					debug.log(creature.color + " is not a valid rgb color");
-				}
-			}
+			debug.log(creature.color + " is not a valid rgb color");
+		}
+	}
 
 //if the creature has food, copy it to the food box
-			if(typeof creature.food == "number")
-			{
-				debug.log("creature.food (" + creature.food + ") is a number");
-				document.getElementById("food").value = creature.food.toString();
-			}
-
-			Vatican.switchTab("editTab");							//switch to the creature editor tab
-		}
-
-		debug.log("function selectCreature() found the creature that the element clicked represented");
-		debug.log("editor.creatureNumber = " + editor.creatureNumber.toString() );
+	if(typeof creature.food == "number")
+	{
+		debug.log("creature.food is a number (amount: " + creature.food + ")");
+		document.getElementById("food").value = creature.food.toString();
 	}
 
 	else
 	{
-		debug.log("function selectCreature() could not find the creature that the element clicked represented");
+		debug.log("creature.food is a " + typeof creature.food + ", not a number");
 	}
 
+	Vatican.switchTab("editTab");							//switch to the creature editor tab
+
+	debug.log("function selectCreature() found the creature that the element clicked represented");
+	debug.log("editor.creatureNumber = " + editor.creatureNumber.toString() );
+
 //end of function
-	debug.log("\nfunction ended");
 	debug.show();
 
 Simulator.display();
