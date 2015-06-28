@@ -274,113 +274,106 @@ editor.saveChanges = function saveChanges(index)
 	debug.show();
 }
 
-editor.selectCreature = function selectCreature(event)
+editor.selectCreature = function selectCreature(creatureNumber)
 {
-//function selectCreature() marks the <span> element clicked as selected,
-//finds the creature that it represents, and puts its contents in the creature editor for editing
+//function selectCreature() selects the creature with the given index number
 
-	var debug = Vatican.debugLog("function selectCreature() ran", Simulator.debug);
-
+	var debug = Vatican.debugLog("function selectCreature()", Simulator.debug);
 	var creature;				//holds reference to actual creature
-	var creatureIndex;	//holds array index of both creature and element that visually represents it
-	var creatureElement = event.target || window.event.srcElement;	//gets the element clicked in IE or W3C-compliant browsers
-	var visibleSoup = document.getElementById("visibleSoup").firstChild;	//be careful when changing this.  If creatureIndex becomes less than zero, you're asking for its array index in an element other than its immediate parent
+	var isValidCreatureNumber = false;	//reject by default
+	var visibleSoup = document.getElementById("visibleSoup").firstChild;	//be careful when changing this
 
-	debug.log("event = " + event);
-	debug.log("creatureElement.nodeName = " + creatureElement.nodeName);
-	debug.log("creatureElement.innerHTML = " + creatureElement.innerHTML);
-	debug.log("creatureElement.style.backgroundColor = " + creatureElement.style.backgroundColor);
+	debug.log("selected creature = \n" + creature);
+	debug.log("visibleSoup.outerHTML = \n" + visibleSoup.outerHTML);
+
+//sanity check: is this creature number valid?
+	if(typeof creatureNumber !== "number")
+	{
+		debug.log("creature number isn't even a number, cancelling");
+	}
+
+	else if(creatureNumber < 0)
+	{
+		debug.log("negative creature selected: #" + creatureNumber + ", this means that no creature is selected.  clearing creature editor");
+	}
+
+	else if(creatureNumber >= soup.length)
+	{
+		debug.log("selected creature (#" + creatureNumber + ") is impossible - it's higher than the population limit.  How did this happen?");
+	}
+
+	else
+	{
+		debug.log("creature #" + creatureNumber + " is selected, updating editor");
+		isValidCreatureNumber = true;
+	}
+
+	if(isValidCreatureNumber)
+	{
+		debug.log("creature #" + creatureNumber + " selected");
+		creature = soup[creatureNumber];
+		debug.log("selected creature = \n" + creature);
+
+		visibleSoup.children[creatureNumber].className = "selected";
+		document.getElementById("codeBox").value = creature.source;
+		document.getElementById("food").value = creature.food;
+	}
+
+	else
+	{
+		debug.log("invalid creature number, cancelling");
+	}
+
+//switch to editor tab
+		Vatican.switchTab("editor");
+
+	debug.show();
+}
+
+editor.update = function update(event)
+{
+//editor.update()
+//updates the creature editor, calls selectCreature() or deSelectCreature() to do the dirty work
+
+	var debug = Vatican.debugLog("function editor.update()", Simulator.debug);
+
+	var creatureNumber = editor.creatureNumber;
+	var creature = soup[creatureNumber];
+	var regex_number;
+
+	var creatureNumber;	//holds array index of both creature and element that visually represents it
+	var creatureElement = event.target || window.event.srcElement;	//gets the element clicked in IE or W3C-compliant browsers
+	var visibleSoup = document.getElementById("visibleSoup").firstChild;	//be careful when changing this.  If creatureNumber becomes less than zero, you're asking for its array index in an element other than its immediate parent
+
+//if triggered by a click, find element clicked and its index number in the soup
+	if(event)
+	{
+		debug.log("was triggered by a click, figuring out which creature to select based on the element clicked");
+		creatureElement = event.target || event.srcElement;	//for compatibility with IE
 
 //get index of current element, working under the assumption that its only child elements are <span> elements (should hold true if Simulator.display() has run at least once
 //credit goes to http://stackoverflow.com/questions/5913927/get-child-node-index
-	debug.log("Array.prototype.indexOf.call(visibleSoup.children, creatureElement) = " + Array.prototype.indexOf.call(visibleSoup.children, creatureElement) );
-	creatureIndex = Array.prototype.indexOf.call(visibleSoup.children, creatureElement);
-	debug.log("creatureIndex = " + creatureIndex);
+		debug.log("Array.prototype.indexOf.call(visibleSoup.children, creatureElement) = " + Array.prototype.indexOf.call(visibleSoup.children, creatureElement) );
+		creatureNumber = Array.prototype.indexOf.call(visibleSoup.children, creatureElement);
+		debug.log("creatureNumber = " + creatureNumber);
 
-//if the element clicked represents a creature, stop the simulation and select the creature
-//also, if a selected element is clicked again, deselect it, and the creature associated with it
-	if( (creatureElement.nodeName === "SPAN") && (creatureIndex !== editor.creatureNumber) )
-	{
-		Simulator.stop();
-
-		debug.log("visibleSoup.id = " + visibleSoup.id);
-		debug.log("visibleSoup.nodeName = " + visibleSoup.nodeName);
-
-//this is mainly to prevent me from being confused if I reintroduce a bug
-		if(creatureIndex >= 0)
+		if( (creatureNumber >= 0) && (creatureNumber < soup.length) )
 		{
-			creature = soup[creatureIndex];
-			visibleSoup.children[creatureIndex].className = "selected";
-			editor.creatureNumber = creatureIndex;
-			debug.log("creature #" + creatureIndex + " = " + creature);
+			debug.log("creature #" + creatureNumber + " selected, showing contents in editor");
+			editor.selectCreature(creatureNumber);
 		}
 
 		else
 		{
-			debug.log("creatureIndex is less than zero.  last time this happened, I was accidentally asking for the index of a grandchild element in its grandparent");
-			debug.log('document.getElementById("visibleSoup").outerHTML = \n' + document.getElementById("visibleSoup").outerHTML);
+			debug.log("no valid creature selected, clearing editor");
+			editor.deSelectCreature();
 		}
-	}
-
-//otherwise, deselect the creature
-	else
-	{
-		editor.deSelectCreature();
-		debug.log("creatureElement.nodeName = " + creatureElement.nodeName);
-		debug.show();
-		return;
-	}
-
-//show the contents of creature.source, regardless of its type
-	debug.log("creature.source is a " + typeof creature.source);
-	debug.log("creature.source = \n" + creature.source);
-	document.getElementById("codeBox").value = creature.source.toString();
-
-//if creature.color is a string, check if it's a valid rgb color
-	if(typeof creature.color == "string")
-	{
-//if so, extract the red, green, and blue parts of an rgb color from it, and show them on the color picker
-		if(Simulator.validColor.test(creature.color) || true)
-		{
-			debug.log('"' + creature.color + '" is a valid rgb color');
-
-			var regx_number = /\d{1,3}/g;
-			var colorsFound = creature.color.match(regx_number);
-
-			debug.log("colors found in the rgb color " + creature.color + ": " + colorsFound);
-
-			document.getElementById("red").value = colorsFound[0];
-			document.getElementById("green").value = colorsFound[1];
-			document.getElementById("blue").value = colorsFound[2];
-
-			editor.colorPreview();
-		}
-
-		else
-		{
-			debug.log(creature.color + " is not a valid rgb color");
-		}
-	}
-
-//if the creature has food, copy it to the food box
-	if(typeof creature.food == "number")
-	{
-		debug.log("creature.food is a number (amount: " + creature.food + ")");
-		document.getElementById("food").value = creature.food.toString();
 	}
 
 	else
 	{
-		debug.log("creature.food is a " + typeof creature.food + ", not a number");
+		debug.log("no event given, did you forget to pass the event to me?");
 	}
 
-	Vatican.switchTab("editTab");							//switch to the creature editor tab
-
-	debug.log("function selectCreature() found the creature that the element clicked represented");
-	debug.log("editor.creatureNumber = " + editor.creatureNumber.toString() );
-
-Simulator.display();
-
-//end of function
 	debug.show();
 }
