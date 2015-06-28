@@ -138,7 +138,7 @@ Simulator.display = function display()
 
 	var debug = Vatican.debugLog("Simulator.display()", Simulator.debug);
 
-//show some statistics
+//update stats
 	var list = soup;
 	document.getElementById('currentPopulation').firstChild.nodeValue = list.length.toString();
 	document.getElementById('generations').firstChild.nodeValue = Simulator.generations.toString();
@@ -148,6 +148,11 @@ Simulator.display = function display()
 	{
 		return;
 	}
+
+//for giving mutated creatures new colors
+	var r = 0;
+	var g = 0;
+	var b = 0;
 
 //show the contents of the soup onscreen
 	var listLength = list.length;
@@ -160,11 +165,6 @@ Simulator.display = function display()
 	var visibleSoup = document.getElementById("visibleSoup");
 	var parent = document.createElement("div");
 	var child;
-
-//for giving mutated creatures new colors
-	var r = 0;
-	var g = 0;
-	var b = 0;
 
 	debug.log("listLength = " + listLength);
 
@@ -477,7 +477,7 @@ Simulator.run = function run(creatureNumber)
 		currentCreature = list[loopCounter];
 	}
 
-	debug.log("processed " + loopCounter + " creatures out of " + length);
+	debug.log("processed " + loopCounter + " creature(s) out of " + length);
 
 //if the list is bigger than the population limit, cut it back down to the population limit
 

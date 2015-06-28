@@ -284,33 +284,34 @@ editor.selectCreature = function selectCreature(event)
 	var creature;				//holds reference to actual creature
 	var creatureIndex;	//holds array index of both creature and element that visually represents it
 	var creatureElement = event.target || window.event.srcElement;	//gets the element clicked in IE or W3C-compliant browsers
-	var visibleSoup;
+	var visibleSoup = document.getElementById("visibleSoup").firstChild;	//be careful when changing this.  If creatureIndex becomes less than zero, you're asking for its array index in an element other than its immediate parent
 
 	debug.log("event = " + event);
 	debug.log("creatureElement.nodeName = " + creatureElement.nodeName);
 	debug.log("creatureElement.innerHTML = " + creatureElement.innerHTML);
 	debug.log("creatureElement.style.backgroundColor = " + creatureElement.style.backgroundColor);
 
+//get index of current element, working under the assumption that its only child elements are <span> elements (should hold true if Simulator.display() has run at least once
+//credit goes to http://stackoverflow.com/questions/5913927/get-child-node-index
+	debug.log("Array.prototype.indexOf.call(visibleSoup.children, creatureElement) = " + Array.prototype.indexOf.call(visibleSoup.children, creatureElement) );
+	creatureIndex = Array.prototype.indexOf.call(visibleSoup.children, creatureElement);
+	debug.log("creatureIndex = " + creatureIndex);
+
 //if the element clicked represents a creature, stop the simulation and select the creature
-	if(creatureElement.nodeName == "SPAN")
+//also, if a selected element is clicked again, deselect it, and the creature associated with it
+	if( (creatureElement.nodeName === "SPAN") && (creatureIndex !== editor.creatureNumber) )
 	{
 		Simulator.stop();
 
-		visibleSoup = document.getElementById("visibleSoup").firstChild;	//be careful when changing this.  If creatureIndex becomes less than zero, you're asking for its array index in an element other than its immediate parent
-
 		debug.log("visibleSoup.id = " + visibleSoup.id);
 		debug.log("visibleSoup.nodeName = " + visibleSoup.nodeName);
-		debug.log("Array.prototype.indexOf.call(visibleSoup.children, creatureElement) = " + Array.prototype.indexOf.call(visibleSoup.children, creatureElement) );
-
-//get index of current element, working under the assumption that its only child elements are <span> elements (should hold true if Simulator.display() has run at least once
-//credit goes to http://stackoverflow.com/questions/5913927/get-child-node-index
-		creatureIndex = Array.prototype.indexOf.call(visibleSoup.children, creatureElement);
-		debug.log("creatureIndex = " + creatureIndex);
 
 //this is mainly to prevent me from being confused if I reintroduce a bug
 		if(creatureIndex >= 0)
 		{
 			creature = soup[creatureIndex];
+			visibleSoup.children[creatureIndex].className = "selected";
+			editor.creatureNumber = creatureIndex;
 			debug.log("creature #" + creatureIndex + " = " + creature);
 		}
 
@@ -329,6 +330,11 @@ editor.selectCreature = function selectCreature(event)
 		debug.show();
 		return;
 	}
+
+//show the contents of creature.source, regardless of its type
+	debug.log("creature.source is a " + typeof creature.source);
+	debug.log("creature.source = \n" + creature.source);
+	document.getElementById("codeBox").value = creature.source.toString();
 
 //if creature.color is a string, check if it's a valid rgb color
 	if(typeof creature.color == "string")
@@ -372,9 +378,6 @@ editor.selectCreature = function selectCreature(event)
 
 	debug.log("function selectCreature() found the creature that the element clicked represented");
 	debug.log("editor.creatureNumber = " + editor.creatureNumber.toString() );
-
-//end of function
-	debug.show();
 
 Simulator.display();
 

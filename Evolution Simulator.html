@@ -11,7 +11,7 @@
 	<script src="startup.js"		type="text/javascript"></script>
 </head>
 
-<body onload="document.getElementById('starter').focus(); Simulator.display.call(null);">
+<body onload="startUp();">
 
 <form action="javascript:" id="controls">
 	<div id="tabTops">
@@ -96,7 +96,7 @@
 		<button id="saveChanges"	type="button" onclick="editor.saveChanges()">Save Changes</button>
 		<button id="plus1"				type="button" onclick="editor.addCreature()">Add Copy to Soup</button>
 		<button id="minus1"				type="button" onclick="editor.removeCreature()">Remove Creature</button>
-		<button id="run1"					type="button" onclick="Simulator.run(1);">Run This Creature's Source Code</button>
+		<button id="run1"					type="button" onclick="Simulator.run(editor.creatureNumber);">Run This Creature's Source Code</button>
 	</span>
 
 </div>
