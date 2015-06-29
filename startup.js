@@ -9,5 +9,6 @@ function startUp()
 	soup.push( Simulator.Creature(ancestor.source, ancestor.color, ancestor.food) );	
 
 	document.getElementById('starter').focus();
+	document.getElementById('tabTops').addEventListener("click", Vatican.switchTab, false);	//activate tabs
 	Simulator.display.call(null);
 }

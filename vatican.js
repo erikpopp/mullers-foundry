@@ -24,67 +24,92 @@ Vatican.showHide = function showHide(element)
 	}
 }
 
-Vatican.switchTab = function switchTab(id)
+Vatican.switchTab = function switchTab(nodeOrEvent)
 {
-//function switchTab() changes the visible tab to the one with ID=checked_radio_button.value
+//function switchTab() changes the visible tab to the one the given DOM node as a tab top
+//if no node is given, switchTab() will switch to whichever one is clicked
+//it's meant to be assigned to the container of a group of tabs
+	var allTabTops = document.getElementById("tabTops");
+	var allTabBodies = document.getElementById("tabContainer");
+	var debug = Vatican.debugLog('function switchTab("' + nodeOrEvent + '")', Simulator.debug);
+	var newTabBody;
+	var newTabNumber;	//used to associate tab bodies with tab tops, even though they're in different containers
+										//I assume that a tab tops will be in the same order as the tab bodies
+	var newTabTop;		//stores a reference to the top part of a tab
+	var oldTabBody;
+	var oldTabNumber;
+	var oldTabTop;		//holds a reference to the currently selected tab top
+	debug.log("node/event is a " + typeof nodeOrEvent);
 
-	var trackerText = "Function switchTab() ran\n";
-
-//initialize variables
-	var regX_visible = /\bvisible\b/;
-	var regX_hidden = /\bhidden\b/;
-	var CSS = "";
-	var currentElement = document.getElementById("tabTops").firstChild;
-	var currentTab = document.getElementById(currentElement.value);
-
-//if text is passed to function switchTab() and that text is the ID of a valid element,
-//id_given will be TRUE
-
-	var id_given = (typeof id == "string" && document.getElementById(id) && document.getElementById(id).parentNode.id == "tabTops");
-
-//loop through the tabs and make the right one visible
-	while(currentElement)
+//get the element that represents the top of the tab to switch to
+//this will either be the element clicked, or the element with the given ID
+//don't pass it the ID of the tab's body
+	if(nodeOrEvent.nodeName)
 	{
-		if(currentElement.type == "radio")
-		{
-//get the DOM element with the ID stored in currentElement.value
-
-			currentTab = document.getElementById(currentElement.value);
-			CSS = currentTab.className.toString();
-
-//if the id of a valid form element was passed to function switchTab(),
-//and if currentElement.id == that id, check the current element
-
-			if(id_given && currentElement.id == id)
-			{
-				currentElement.checked = true;
-			}
-
-//if the id of a valid form element was passed to function switchTab(),
-//and if currentElement != that id, uncheck the current element
-
-			else if(id_given)
-			{
-				currentElement.checked = false;
-			}
-
-//if the current element is checked, prepare to make it visible
-			if(currentElement.checked == true)
-			{
-				CSS = CSS.replace(regX_hidden, "visible");
-			}
-
-//otherwise, prepare to hide that element
-			else
-			{
-				CSS = CSS.replace(regX_visible, "hidden");
-			}
-
-			currentTab.className = CSS;	//show or hide currentElement
-		}
-
-		currentElement = currentElement.nextSibling;
+		debug.log('a DOM node was passed, switching to tab with outerHTML = \n' + nodeOrEvent.outerHTML);
+		newTabTop = nodeOrEvent;
+		newTabTop.checked = true;	//when programmatically switching tabs, I want to make sure that the interface looks right
 	}
+
+	else if(nodeOrEvent.target)
+	{
+		debug.log("using the industry-standard way of accessing the element clicked");
+		newTabTop = nodeOrEvent.target;
+	}
+
+	else if(nodeOrEvent.srcElement)
+	{
+		debug.log("this is Internet Explorer, so I have to call the element clicked by a different name");
+		newTabTop = nodeOrEvent.srcElement;
+	}
+
+	else
+	{
+		debug.log("I don't know what to do, so I'll give you this message and quit");
+		debug.log("here's what was passed to me:\n" + nodeOrEvent);
+		debug.show();
+		return;
+	}
+
+	debug.log("newTabTop.outerHTML = \n" + newTabTop.outerHTML);
+
+//find the body of the new tab by assuming that tab tops and tab bodies are in the same order, and treating child element collections like arrays
+	newTabNumber = Array.prototype.indexOf.call(newTabTop.parentElement.children, newTabTop);	//treat the collection of children of an element as an array, and get the index of the top of the tab.  As long as the tab tops are in the same order as the tab bodies, I can show the tab body that's at the same position, and I don't need any hard-coded reference to it
+	debug.log("the selected tab is #" + newTabNumber);
+
+//find the body of the new tab
+	newTabBody = allTabBodies.children[newTabNumber];
+	debug.log("newTabBody.outerHTML = \n" + newTabBody.outerHTML);
+	
+//find the old tab top and body
+//easily handle the case where no tab has yet been selected
+	if(Vatican.currentTab)
+	{
+		debug.log("Vatican.currentTab.outerHTML = \n" + Vatican.currentTab.outerHTML);
+		oldTabTop = Vatican.currentTab;
+		oldTabNumber = Array.prototype.indexOf.call(oldTabTop.parentElement.children, oldTabTop);
+		oldTabBody = allTabBodies.children[oldTabNumber];
+	}
+
+	else
+	{
+		debug.log("no current tab on file, it looks like this is the first time that a tab has been clicked");
+		debug.log("finding currently opened tab by finding which tab is visible");
+		oldTabBody = newTabBody.parentElement.querySelector(".visible");
+		oldTabNumber = Array.prototype.indexOf.call(oldTabBody.parentElement.children, oldTabBody);
+		oldTabTop = allTabTops.children[oldTabNumber];
+	}
+
+	debug.log("oldTabTop.outerHTML = \n" + oldTabTop.outerHTML);
+	debug.log("oldTabNumber = " + oldTabNumber);
+	debug.log("oldTabBody.outerHTML = \n" + oldTabBody.outerHTML);
+
+//show the current tab
+	oldTabBody.className = "hidden";
+	Vatican.currentTabTop = newTabTop;
+	newTabBody.className = "visible";
+
+	debug.show();
 }
 
 Vatican.isEnter = function isEnter(e)
