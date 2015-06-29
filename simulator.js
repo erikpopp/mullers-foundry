@@ -2,7 +2,7 @@
 //I hid all parts of the simulation inside of global objects to make it less likely that rogue code will break the simulation
 
 var Simulator = {
-	debug:						true,
+	debug:						false,			//if setting this to [true] temporarily, use startup script and uncomment line that says "Simulator.debug = true"
 	delay:						0,					//number of milliseconds to wait before the next generation
 	displayOn:				true,				//says whether to show or hide a visual representation of the soup
 	generations:			0,

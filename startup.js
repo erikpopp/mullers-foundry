@@ -3,6 +3,8 @@
 
 function startUp()
 {
+//	Simulator.debug = true;
+
 	window.soup = new Array();	//create the array [soup]
 	Simulator.blankCreature = Simulator.Creature("","rgb(255,255,255)", 0);
 	window.ancestor = Simulator.Creature("this.food++; soup.push( {source: this.source, food: 1, color: 'rgb(200,200,200)' } )", "rgb(200,200,200)", 1);
