@@ -17,7 +17,7 @@
 	<div id="tabTops">
 	<input type="radio" name="tabTops" onclick="Vatican.switchTab(); editor.clearSelection();" value="runTime" checked>Runtime
 	<input id="editTab" type="radio" name="tabTops" onclick="Vatican.switchTab()" value="editor">Creature Editor
-	<input type="radio" name="tabTops" onclick="Vatican.switchTab(); editor.clearSelection();" value="commandPrompt">Command Prompt
+	<input class="broken" type="radio" name="tabTops" onclick="Vatican.switchTab(); editor.clearSelection();" value="commandPrompt"><!-- Command Prompt -->
 	&nbsp;&nbsp;&nbsp;<input type="checkbox" id="debug" onclick="Simulator.debug = this.checked;">Debug Mode
 	&nbsp;&nbsp;&nbsp;<a href="javascript: alert('To Do:\n- organize git into 3 branches: development, stable, and release\n- fix function editor.removeCreature()\n- it doesn't currently clear the creature editor to reflect the fact that the just-removed creature is no longer being edited\n- make all features work properly or remove them\n- create a strict naming convention for variables, functions, etc.\n- look through all code, and make sure that it's coded in a clear, consistent style\n- clean up interface on back end\n- clean up interface on front end\n- rewrite debugger to allow different levels of debugging\n- make sure that interface between core and UI allows easy porting to node.js');">Notes</a>
 	</div>
@@ -25,11 +25,11 @@
 	<div id="tabContainer">
 		<div id="runTime" class="visible">
 			<input type="button" id="starter" onclick="Simulator.startUp();" value="Start">
-			<button type="button" id="reset" onclick="soup = [Simulator.Creature(ancestor.source, ancestor.color, ancestor.food) ]; Simulator.display.call(null)">
+			<button class="broken" type="button" id="reset" onclick="soup = [Simulator.Creature(ancestor.source, ancestor.color, ancestor.food) ]; Simulator.display.call(null)">
 				Reset
 			</button>
 			&nbsp;&nbsp;
-			<span>Stop After 
+			<span class="broken">Stop After 
 				<input type="text" id="runFor" onkeyup="Simulator.runFor()" onclick="if(this.value == 'infinite'){this.value = ''}" value="infinite"> 
 				Generations
 			</span>
@@ -96,12 +96,12 @@
 		<button id="saveChanges"	type="button" onclick="editor.saveChanges()">Save Changes</button>
 		<button id="plus1"				type="button" onclick="editor.addCreature()">Add Copy to Soup</button>
 		<button id="minus1"				type="button" onclick="editor.removeCreature()">Remove Creature</button>
-		<button id="run1"					type="button" onclick="Simulator.run(1);">Run This Creature's Source Code</button>
+		<button class="broken" id="run1"					type="button" onclick="Simulator.run(1);">Run This Creature's Source Code</button>
 	</span>
 
 </div>
 
-<div id="commandPrompt" class="hidden">
+<div id="commandPrompt" class="hidden broken">
 	<textarea id="commandBox"></textarea>
 	<button id="runCommand" onclick="eval(document.getElementById('commandBox').value.toString() )">
 		Run

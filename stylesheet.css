@@ -105,7 +105,7 @@ span {
 	display:										block;
 }
 
-.hidden {
+.hidden, .broken {
 	display:										none;
 }
 
