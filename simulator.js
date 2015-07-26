@@ -3,7 +3,7 @@
 
 var Simulator = {
 	debug:						false,
-	delay:						0,					//number of milliseconds to wait before the next generation
+	delay:						50,					//number of milliseconds to wait before the next generation
 	displayOn:				true,				//says whether to show or hide a visual representation of the soup
 	generations:			0,
 	generationsLeft:	-1,					//when running the simulator for a certain number of generations, this is the number of generations left to run.  For unlimited generations (the default), set to something less than 0
