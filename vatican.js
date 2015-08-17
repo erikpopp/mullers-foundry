@@ -24,14 +24,14 @@ Vatican.showHide = function showHide(element)
 	}
 }
 
-Vatican.switchTab = function switchTab(nodeOrEvent)
+Vatican.switchTab = function switchTab(nodeEventOrId)
 {
 //function switchTab() changes the visible tab to the one the given DOM node as a tab top
 //if no node is given, switchTab() will switch to whichever one is clicked
 //it's meant to be assigned to the container of a group of tabs
 	var allTabTops = document.getElementById("tabTops");
 	var allTabBodies = document.getElementById("tabContainer");
-	var debug = Vatican.debugLog('function switchTab("' + nodeOrEvent + '")', Simulator.debug);
+	var debug = Vatican.debugLog('function switchTab("' + nodeEventOrId + '")', Simulator.debug);
 	var newTabBody;
 	var newTabNumber;	//used to associate tab bodies with tab tops, even though they're in different containers
 										//I assume that a tab tops will be in the same order as the tab bodies
@@ -39,51 +39,71 @@ Vatican.switchTab = function switchTab(nodeOrEvent)
 	var oldTabBody;
 	var oldTabNumber;
 	var oldTabTop;		//holds a reference to the currently selected tab top
-	debug.log("node/event is a " + typeof nodeOrEvent);
+	debug.log("node/event is a " + typeof nodeEventOrId);
 
 //get the element that represents the top of the tab to switch to
 //this will either be the element clicked, or the element with the given ID
 //don't pass it the ID of the tab's body
-	if(nodeOrEvent.nodeName)
+	if(nodeEventOrId.nodeName)
 	{
-		debug.log('a DOM node was passed, switching to tab with outerHTML = \n' + nodeOrEvent.outerHTML);
-		newTabTop = nodeOrEvent;
-		newTabTop.checked = true;	//when programmatically switching tabs, I want to make sure that the interface looks right
+		debug.log('a DOM node was passed, switching to tab with outerHTML = \n' + nodeEventOrId.outerHTML);
+		newTabTop = nodeEventOrId;
 	}
 
-	else if(nodeOrEvent.target)
+	else if(nodeEventOrId.target)
 	{
 		debug.log("using the industry-standard way of accessing the element clicked");
-		newTabTop = nodeOrEvent.target;
+		newTabTop = nodeEventOrId.target;
 	}
 
-	else if(nodeOrEvent.srcElement)
+	else if(nodeEventOrId.srcElement)
 	{
 		debug.log("this is Internet Explorer, so I have to call the element clicked by a different name");
-		newTabTop = nodeOrEvent.srcElement;
+		newTabTop = nodeEventOrId.srcElement;
+	}
+
+	else if(typeof nodeEventOrId === "string")
+	{
+		debug.log('I was given the string of text "' + nodeEventOrId + '", assuming that this is the ID of a DOM element');
+		newTabTop = document.getElementById(nodeEventOrId);
 	}
 
 	else
 	{
 		debug.log("I don't know what to do, so I'll give you this message and quit");
-		debug.log("here's what was passed to me:\n" + nodeOrEvent);
+		debug.log("here's what was passed to me:\n" + nodeEventOrId);
 		debug.show();
 		return;
 	}
 
 	debug.log("newTabTop.outerHTML = \n" + newTabTop.outerHTML);
 
+//verify that the element given is a radio button
+	if(newTabTop && newTabTop.type === "radio")
+	{
+		debug.log("I was given a radio button, checking it programmatically so the editor looks right when this function is called by another function");
+		newTabTop.checked = true;
+	}
+
+	else
+	{
+		debug.log("I wasn't given a radio button, so I'll show you this error and quit");
+		debug.log("newTabTop.type = " + newTabTop.type);
+		debug.show();
+		return;
+	}
+
 //find the body of the new tab by assuming that tab tops and tab bodies are in the same order, and treating child element collections like arrays
 	newTabNumber = Array.prototype.indexOf.call(newTabTop.parentElement.children, newTabTop);	//treat the collection of children of an element as an array, and get the index of the top of the tab.  As long as the tab tops are in the same order as the tab bodies, I can show the tab body that's at the same position, and I don't need any hard-coded reference to it
-	debug.log("the selected tab is #" + newTabNumber);
+	debug.log("selecting tab #" + newTabNumber);
 
 //find the body of the new tab
 	newTabBody = allTabBodies.children[newTabNumber];
 	debug.log("newTabBody.outerHTML = \n" + newTabBody.outerHTML);
-	
+
 //find the old tab top and body
 //easily handle the case where no tab has yet been selected
-	if(Vatican.currentTab)
+	if(typeof Vatican.currentTab === "number")
 	{
 		debug.log("Vatican.currentTab.outerHTML = \n" + Vatican.currentTab.outerHTML);
 		oldTabTop = Vatican.currentTab;
@@ -104,6 +124,11 @@ Vatican.switchTab = function switchTab(nodeOrEvent)
 	debug.log("oldTabNumber = " + oldTabNumber);
 	debug.log("oldTabBody.outerHTML = \n" + oldTabBody.outerHTML);
 
+//if the editor is selected, deselect it
+	if(newTabTop.id !== "tabTopEditor")
+	{
+		editor.deSelectCreature(editor.creatureNumber);
+	}
 //show the current tab
 	oldTabBody.className = "hidden";
 	Vatican.currentTabTop = newTabTop;

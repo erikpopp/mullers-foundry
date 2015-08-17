@@ -14,10 +14,12 @@
 <body onload="startUp();">
 
 <form action="javascript:" id="controls">
-	<div id="tabTops" onclick="Vatican.switchTab(event);">
-	<input type="radio" name="tabTops" value="runTime" checked>Runtime
-	<input id="editTab" type="radio" name="tabTops" value="editor">Creature Editor
-	<input type="radio" name="tabTops" value="commandPrompt">Command Prompt
+	<div>
+		<span id="tabTops" onclick="Vatican.switchTab(event);">
+			<input id="tabTopRuntime"						type="radio" name="tabTops" value="runTime" checked>Runtime
+			<input id="tabTopEditor"							type="radio" name="tabTops" value="editor">Creature Editor
+			<input id="tabTopCommandPrompt"			type="radio" name="tabTops" value="commandPrompt">Command Prompt
+		</span>
 	&nbsp;&nbsp;&nbsp;<input type="checkbox" id="debug" onclick="Simulator.debug = this.checked;">Debug Mode
 	&nbsp;&nbsp;&nbsp;<a href="javascript: alert('To Do:\n- rewrite creature editor\n- make all features work properly or remove them\n- create a strict naming convention for variables, functions, etc.\n- look through all code, and make sure that it is coded in a clear, consistent style\n- clean up interface on back end\n- clean up interface on front end\n- rewrite debugger to allow different levels of debugging\n- make sure that interface between core and UI allows easy porting to node.js');">Notes</a>
 	</div>

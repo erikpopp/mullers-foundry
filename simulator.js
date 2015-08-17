@@ -12,7 +12,7 @@ var Simulator = {
 	mutationRate:			10,					//chance of mutation = 1 / [mutationRate]
 	on:								false,
 	validColor:				new RegExp("^rgb\\(\\d{1,2}[0-5]?,\\d{1,2}[0-5]?,\\d{1,2}[0-5]?\\);?$","i"),	//yes, I know that invalid rgb colors will pass this test, but this is much easier to code, and uses less processing power
-	version:					0.9
+	version:					1.1
 }
 
 Simulator.changeMutationRate = function changeMutationRate(rate)

@@ -294,7 +294,7 @@ editor.selectCreature = function selectCreature(creatureNumber)
 
 	else if(creatureNumber < 0)
 	{
-		debug.log("negative creature selected: #" + creatureNumber + ", this means that no creature is selected.  clearing creature editor");
+		debug.log("negative creature selected: #" + creatureNumber + ", this means that no creature is selected");
 	}
 
 	else if(creatureNumber >= soup.length)
@@ -314,6 +314,7 @@ editor.selectCreature = function selectCreature(creatureNumber)
 		creature = soup[creatureNumber];
 		debug.log("selected creature = \n" + creature);
 
+		editor.creatureNumber = creatureNumber;
 		visibleSoup.children[creatureNumber].className = "selected";
 		document.getElementById("codeBox").value = creature.source;
 		document.getElementById("food").value = creature.food;
@@ -325,7 +326,7 @@ editor.selectCreature = function selectCreature(creatureNumber)
 	}
 
 //switch to editor tab
-		Vatican.switchTab("editor");
+		Vatican.switchTab("tabTopEditor");
 
 	debug.show();
 }
@@ -339,10 +340,11 @@ editor.update = function update(event)
 
 	var creatureNumber = editor.creatureNumber;
 	var creature = soup[creatureNumber];
+	var isValidCreatureNumber = false;
 	var regex_number;
 
 	var creatureNumber;	//holds array index of both creature and element that visually represents it
-	var creatureElement = event.target || window.event.srcElement;	//gets the element clicked in IE or W3C-compliant browsers
+	var creatureElement;	//holds the element clicked
 	var visibleSoup = document.getElementById("visibleSoup").firstChild;	//be careful when changing this.  If creatureNumber becomes less than zero, you're asking for its array index in an element other than its immediate parent
 
 //if triggered by a click, find element clicked and its index number in the soup
@@ -360,13 +362,24 @@ editor.update = function update(event)
 		if( (creatureNumber >= 0) && (creatureNumber < soup.length) )
 		{
 			debug.log("creature #" + creatureNumber + " selected, showing contents in editor");
-			editor.selectCreature(creatureNumber);
+			isValidCreatureNumber = true;
 		}
 
 		else
 		{
 			debug.log("no valid creature selected, clearing editor");
+		}
+
+		if(editor.creatureNumber === creatureNumber || !isValidCreatureNumber)
+		{
+			debug.log("user clicked the selected element or in the empty space where no creature is, deselecting currently selected creature");
 			editor.deSelectCreature();
+		}
+
+		else
+		{
+			debug.log("user clicked on an element other than the selected element, selecting it");
+			editor.selectCreature(creatureNumber);
 		}
 	}
 
