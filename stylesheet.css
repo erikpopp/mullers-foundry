@@ -28,6 +28,7 @@ span {
 
 #visibleSoup, .visibleSoup {
 	border:											5px solid rgb(200,200,200);
+	cursor:											auto; /* makes child <span> elements clickable in Webkit-based browsers */
 	margin:											0;
 	padding:										1px;
 	width:											99%;
@@ -37,6 +38,7 @@ span {
 }
 
 #visibleSoup span {
+	cursor:											pointer;
 	float:											left;
 	margin:											0;
 	height:											2px;
