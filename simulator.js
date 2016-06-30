@@ -505,7 +505,13 @@ Simulator.run = function run(creatureNumber)
 	{
 		Simulator.stop();
 		var soupDump = document.getElementById("soupDump");
-		soupDump.value = soup.join("\n\n");
+		var creatureSources = [];
+
+		for(var soupDumpCounter = 0; soupDumpCounter < length; soupDumpCounter++)
+		{
+			creatureSources.push(Vatican.objectToString(soup[soupDumpCounter], ",\n" ) );
+		}
+		soupDump.value = creatureSources.join("\n\n");
 		soupDump.className = "visible";
 		soupDump.select();
 		throw new Error("no creature in the soup was able to run");

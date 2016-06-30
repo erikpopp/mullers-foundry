@@ -180,27 +180,27 @@ Vatican.validate = function validate(arg, accept, erase)
 }
 
 //add a proper Object.toString()
-Object.prototype.toString = function(separator)
+Vatican.objectToString = function(obj,separator)
 {
 	var prop;
-	var temp = ["{"];
-	var length = 1;
+	var temp = [];
+	var length = temp.length;
 
 	if(typeof separator != "string")
 	{
 		var separator = "\n";
 	}
 
-	for(prop in this)
+	for(prop in obj)
 	{
-		if(this.hasOwnProperty(prop) )
+		if(obj.hasOwnProperty(prop) )
 		{
-			temp[length] = prop + ": " + this[prop];
+			temp[length] = prop + ": " + obj[prop];
 			length++;
 		}
 	}
 
 	temp.push("}");
 
-	return temp.join(separator);
+	return "{\n" + temp.join(separator);
 }
