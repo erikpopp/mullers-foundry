@@ -6,7 +6,6 @@ var Simulator = {
 	delay:						50,					//number of milliseconds to wait before the next generation
 	displayOn:				true,				//says whether to show or hide a visual representation of the soup
 	generations:			0,
-	generationsLeft:	-1,					//when running the simulator for a certain number of generations, this is the number of generations left to run.  For unlimited generations (the default), set to something less than 0
 	interval:					undefined,	//holds a reference to the interval created by setInterval()
 	limit:						5,					//population limit
 	mutationRate:			10,					//chance of mutation = 1 / [mutationRate]
@@ -351,14 +350,13 @@ Simulator.mutate = function mutate(creatureNumber)
 	}
 }
 
-Simulator.run = function run(creatureNumber)
+Simulator.run = function run()
 {
 //function run() is the simulation
 //It "gives life" to the functions in the array "soup" by running each of them
 //If array "soup" is longer than the value of the variable "limit", it removes the first element in the "soup" until the array is short enough, starting with the "creature" at Array index 0
 
 //declare variables
-	var run1Creature = false;
 	var list = soup;
 	var length = +list.length;
 	var r, g, b;
@@ -374,22 +372,11 @@ Simulator.run = function run(creatureNumber)
 	var backupPush = Array.prototype.push;
 	var backupSoup = soup;
 
-	var debug = Vatican.debugLog("function run(" + creatureNumber + ")", Simulator.debug);
+	var debug = Vatican.debugLog("function run()", Simulator.debug);
 	debug.log("length = " + length);
-	debug.log("creatureNumber = " + creatureNumber);
-
-	//is function run() supposed to run only one creature's source code?  If so, change the loop counter and the cached size of the soup
-	if( (typeof creatureNumber == "number") && (creatureNumber >= 0) && (creatureNumber < length) )
-	{
-		debug.log("Simulator.run(" + creatureNumber + "): running only creature #" + creatureNumber + ", instead of all creatures in soup");
-		loopCounter = creatureNumber;
-		length = creatureNumber + 1;
-		run1Creature = true;
-		runCounter = -1;
-	}
 
 //if the simulator shouldn't be on, stop it immediately
-	if(!(Simulator.on || run1Creature) )
+	if(!Simulator.on)
 	{
 		Simulator.stop();
 		return;
@@ -501,7 +488,7 @@ Simulator.run = function run(creatureNumber)
 //if no creatures have any food, and thus have not run, stop the simulation
 //if in run-1-creature mode, skip this step
 
-	if( (runCounter == 0) && !run1Creature )
+	if(runCounter == 0)
 	{
 		Simulator.stop();
 		var soupDump = document.getElementById("soupDump");
@@ -527,58 +514,6 @@ Simulator.run = function run(creatureNumber)
 	currentCreature = null;
 	mutate = null;
 	validColor = null;
-}
-
-Simulator.runFor = function runFor(number)
-{
-//function runFor() sets or changes the number of generations that Simulator will run for
-//if Simulator.generationLimit is less than 0, the simulation will continue until stopped
-
-	var debug = Vatican.debugLog("function runFor() ran", Simulator.debug);
-	debug.log("number passed to function: " + number);
-
-	if( (typeof number == "number") && (number >= 0) )
-	{
-		debug.log("the data passed to the function is a valid number; setting the generation limit to " + number);
-		Simulator.generationsLeft = number;
-	}
-
-	else
-	{
-		debug.log("the data passed to the function (" + number + ") is not a valid number; looking for a number in the text box");
-		var box = document.getElementById("runFor");
-		var text = box.value.toString();
-
-		text = text.replace(/\D/g, "");
-
-		debug.log("after erasing non-number characters, the text in text box is \"" + text + '"');
-
-		if(text)
-		{
-			var number = +text;
-
-			if(number >= 0)
-			{
-				debug.log("the stuff in the text box (" + text + ") is a valid number; setting Simulator to stop after " + number + " generations");
-			}
-
-			else if(number < 0)
-			{
-				debug.log("the stuff in the text box (" + text + ") is a negative number; Simulator will run forever until stopped");
-				text = "infinite";
-			}
-
-			Simulator.generationsLeft = number;
-		}
-
-		if(box.value.toString() != text)
-		{
-			debug.log("erasing all non-numbers from the text box");
-			box.value = text;
-		}
-	}
-
-	debug.show();
 }
 
 Simulator.startUp = function startUp(wasReset)
