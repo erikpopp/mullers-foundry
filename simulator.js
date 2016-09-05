@@ -15,7 +15,7 @@ var Simulator = {
 	version:					1.0
 }
 
-Simulator.changeMutationRate = function changeMutationRate(newRate)
+Simulator.changeMutationRate = function(newRate)
 {
 //changes the mutation rate
 	var debug = Vatican.debugLog("function changeMutationRate() ran", Simulator.debug);
@@ -47,26 +47,19 @@ Simulator.changeMutationRate = function changeMutationRate(newRate)
 	debug.show();
 }
 
-Simulator.changePopulationLimit = function changePopulationLimit()
+Simulator.changePopulationLimit = function changePopulationLimit(newLimit)
 {
 //function changePopulationLimit() changes the population limit and removes any non-number characters from the text box with ID=populationLimit
 
-	var element = document.getElementById('populationLimit');
-	var textEntered = element.value.toString();
-	var nonNumbers = /\D/g;
-
-	//only change the text box that shows the population limit if you need to
-	if(nonNumbers.test(textEntered) )
+	if(newLimit != NaN && newLimit > 0)
 	{
-		textEntered = textEntered.replace(nonNumbers, "");
-		element.value = textEntered.toString();
+		Simulator.populationLimit = newLimit;
+		return newLimit;
 	}
 
-	var number = parseInt(textEntered);
-
-	if(number != NaN && number > 0)
+	else
 	{
-		Simulator.populationLimit = number;
+		return 0;
 	}
 }
 
