@@ -59,7 +59,7 @@ editor.clearSelection = function clearSelection(index)
 
 	if(!visibleSoup.firstChild || visibleSoup.firstChild.nodeName.toLowerCase() != "div")
 	{
-		Simulator.display.call(null);
+		Interface.showSoup();
 	}
 
 	visibleSoup = visibleSoup.firstChild;
@@ -207,7 +207,7 @@ editor.removeCreature = function removeCreature(index)
 	}
 
 //update the GUI
-	Simulator.display();
+	Interface.showSoup();
 
 //end of function
 	debug.show();
@@ -250,7 +250,7 @@ editor.saveChanges = function saveChanges(index)
 
 		soup[index] = Simulator.Creature(source, color, food);
 
-		Simulator.display();
+		Interface.showSoup();
 	}
 
 	else
@@ -291,7 +291,7 @@ editor.selectCreature = function selectCreature(e)
 //make sure that the visual representation of the soup is valid
 		if(!visibleSoup.firstChild || visibleSoup.firstChild.nodeName.toLowerCase() != "div")
 		{
-			Simulator.display.call(null);
+			Interface.showSoup();
 		}
 
 		visibleSoup = visibleSoup.firstChild;
@@ -392,7 +392,7 @@ editor.selectCreature = function selectCreature(e)
 	debug.log("\nfunction ended");
 	debug.show();
 
-Simulator.display();
+Interface.showSoup();
 
 //end of function
 	debug.show();

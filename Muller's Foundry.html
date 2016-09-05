@@ -4,15 +4,15 @@
 <head>
 	<title>Muller's Foundry</title>
 	<meta charset="UTF-8">
-	<link rel="stylesheet" href="stylesheet.css">
+	<link rel="stylesheet" 			href="stylesheet.css">
 	<script src="vatican.js"		type="text/javascript"></script>
 	<script src="simulator.js"	type="text/javascript"></script>
 	<script src="editor.js"			type="text/javascript"></script>
-	<script src="interface.js"			type="text/javascript"></script>
+	<script src="interface.js"	type="text/javascript"></script>
 	<script src="startup.js"		type="text/javascript"></script>
 </head>
 
-<body onload="document.getElementById('starter').focus(); Simulator.display.call(null);">
+<body onload="document.getElementById('starter').focus(); Interface.showSoup();">
 
 <form action="javascript:" id="controls">
 	<div id="tabTops">
@@ -58,7 +58,7 @@
 					<input type="text" id="simulationSpeed" value="50" onkeyup="Interface.changeSpeed()">
 				</td>
 				<td class="left">
-					<input type="checkbox" id="displayOn" checked onclick="Simulator.displayOn = this.checked; var element = document.getElementById('visibleSoup'); if(this.checked){Simulator.display.call(window); element.className = 'visible'} else {element.className = 'hidden'; element.innerHTML = ''}">
+					<input type="checkbox" id="soupVisible" checked onclick="Interface.soupVisible = this.checked; var element = document.getElementById('visibleSoup'); if(this.checked){Interface.display.call(window); element.className = 'visible'} else {element.className = 'hidden'; element.innerHTML = ''}">
 					Show Creatures
 				</td>
 				<td class="left">
