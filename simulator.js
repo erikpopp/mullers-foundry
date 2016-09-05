@@ -63,20 +63,13 @@ Simulator.changePopulationLimit = function changePopulationLimit(newLimit)
 	}
 }
 
-Simulator.changeSpeed = function changeSpeed()
+Simulator.changeSpeed = function changeSpeed(newSpeed)
 {
-//function changeSpeed() changes the speed that the simulation runs at
-	var element = document.getElementById('simulationSpeed');
-	var oldValue = element.value.toString();
-	var nonNumbers = /\D/g;	//search for non-numbers
-	var newValue = oldValue.replace(nonNumbers, "");
-	element.value = newValue.toString();
-	newValue = parseInt(newValue);
+//changes the speed that the simulation runs at by setting the minimum delay in milliseconds between generations
 
-//check if the text typed in is a number
-	if(newValue && (newValue != Simulator.delay) && (newValue != NaN) && (newValue >= 0) )
+	if(typeof newSpeed === "number")
 	{
-		Simulator.delay = newValue;
+		Simulator.delay = newSpeed;
 
 		if(Simulator.on)
 		{
@@ -84,10 +77,12 @@ Simulator.changeSpeed = function changeSpeed()
 			Simulator.startUp(true);
 		}
 
-		if(Simulator.debug)
-		{
-			alert('interval will now wait ' + Simulator.delay.toString() + ' milliseconds between runs');
-		}
+		return newSpeed;
+	}
+
+	else
+	{
+		return -1;
 	}
 }
 

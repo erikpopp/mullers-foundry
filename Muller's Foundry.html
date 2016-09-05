@@ -55,7 +55,7 @@
 				</td>
 				<td>
 					Delay in <abbr title="milliseconds">MS</abbr>:
-					<input type="text" id="simulationSpeed" value="50" onkeyup="Simulator.changeSpeed()">
+					<input type="text" id="simulationSpeed" value="50" onkeyup="Interface.changeSpeed()">
 				</td>
 				<td class="left">
 					<input type="checkbox" id="displayOn" checked onclick="Simulator.displayOn = this.checked; var element = document.getElementById('visibleSoup'); if(this.checked){Simulator.display.call(window); element.className = 'visible'} else {element.className = 'hidden'; element.innerHTML = ''}">
