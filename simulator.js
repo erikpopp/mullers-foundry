@@ -10,33 +10,26 @@ var Simulator = {
 	limit:						5,					//population limit
 	mutationRate:			10,					//chance of mutation = 1 / [mutationRate]
 	on:								false,
+	populationLimit:	50,
 	validColor:				new RegExp("^rgb\\(\\d{1,2}[0-5]?,\\d{1,2}[0-5]?,\\d{1,2}[0-5]?\\);?$","i"),	//yes, I know that invalid rgb colors will pass this test, but this is much easier to code, and uses less processing power
 	version:					1.0
 }
 
-Simulator.changeMutationRate = function changeMutationRate(rate)
+Simulator.changeMutationRate = function changeMutationRate(newRate)
 {
-//function changeMutationRate() changes the mutation rate
+//changes the mutation rate
 	var debug = Vatican.debugLog("function changeMutationRate() ran", Simulator.debug);
-	var element = document.getElementById("mutationRate");
-	var newRate = Vatican.validate(element, /^\d+$/, /\D+/g);
 
 //allow other parts of the program to change the mutation rate
-	if(typeof rate == "number")
+	if(typeof newRate === "number")
 	{
-		debug.log("the number " + rate + " was passed to function changeMutationRate()");
-		newRate = rate;
-	}
-
-	else if(newRate != false)
-	{
-		debug.log("the number typed in the text box (" + newRate + ") will be the new mutation rate");
-		element.value = newRate;
+		debug.log("the number " + newRate + " was passed to function changeMutationRate()");
 	}
 
 	else
 	{
-		debug.log("function changeMutationRate() doesn't know what to set the mutation rate to; as far as it can tell, it should change the mutation rate to " + newRate);
+		debug.log("the number typed in the text box (" + newRate + ") is not a number, aborting");
+		throw new Error("Simulator.changeMutationRate(\"" + newRate + "\"): mutation rate must be a number, aborting");
 	}
 
 //if the number of mutations is set to 0 or less, no mutations will happen
@@ -48,7 +41,7 @@ Simulator.changeMutationRate = function changeMutationRate(rate)
 
 	else
 	{
-		Simulator.mutationRate = +newRate;
+		Simulator.mutationRate = newRate;
 	}
 
 	debug.show();

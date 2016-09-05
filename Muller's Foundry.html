@@ -8,6 +8,7 @@
 	<script src="vatican.js"		type="text/javascript"></script>
 	<script src="simulator.js"	type="text/javascript"></script>
 	<script src="editor.js"			type="text/javascript"></script>
+	<script src="interface.js"			type="text/javascript"></script>
 	<script src="startup.js"		type="text/javascript"></script>
 </head>
 
@@ -17,7 +18,6 @@
 	<div id="tabTops">
 	<input type="radio" name="tabTops" onclick="Vatican.switchTab(); editor.clearSelection();" value="runTime" checked>Runtime
 	<input id="editTab" type="radio" name="tabTops" onclick="Vatican.switchTab()" value="editor">Creature Editor
-	<input class="broken" type="radio" name="tabTops" onclick="Vatican.switchTab(); editor.clearSelection();" value="commandPrompt"><!-- Command Prompt -->
 <!--	&nbsp;&nbsp;&nbsp;<input type="checkbox" id="debug" onclick="Simulator.debug = this.checked;">Debug Mode
 	&nbsp;&nbsp;&nbsp;<a href="javascript: alert('To Do:\n- clean up interface on back end\n- clean up interface on front end\n- replace debugger with proper, third-party debugger\n- make sure that interface between core and UI allows easy porting to node.js');">Notes</a> -->
 	</div>
@@ -25,20 +25,12 @@
 	<div id="tabContainer">
 		<div id="runTime" class="visible">
 			<input type="button" id="starter" onclick="Simulator.startUp();" value="Start">
-			<button class="broken" type="button" id="reset" onclick="soup = [Simulator.Creature(ancestor.source, ancestor.color, ancestor.food) ]; Simulator.display.call(null)">
-				Reset
-			</button>
-			&nbsp;&nbsp;
-			<span class="broken">Stop After 
-				<input type="text" id="runFor" onkeyup="Simulator.runFor()" onclick="if(this.value == 'infinite'){this.value = ''}" value="infinite"> 
-				Generations
-			</span>
 			<br>
 			<table id="options">
 			<tr>
 				<td>
 					Mutation Rate: 1 / 
-					<input id="mutationRate" type="text" value="10" onkeyup="Simulator.changeMutationRate()">
+					<input id="mutationRate" type="text" value="10" onkeyup="Interface.changeMutationRate()">
 				</td>
 				<td>
 					&nbsp;
@@ -96,16 +88,8 @@
 		<button id="saveChanges"	type="button" onclick="editor.saveChanges()">Save Changes</button>
 		<button id="plus1"				type="button" onclick="editor.addCreature()">Add Copy to Soup</button>
 		<button id="minus1"				type="button" onclick="editor.removeCreature()">Remove Creature</button>
-		<button class="broken" id="run1"					type="button" onclick="Simulator.run(1);">Run This Creature's Source Code</button>
 	</span>
 
-</div>
-
-<div id="commandPrompt" class="hidden broken">
-	<textarea id="commandBox"></textarea>
-	<button id="runCommand" onclick="eval(document.getElementById('commandBox').value.toString() )">
-		Run
-	</button>
 </div>
 
 </div>

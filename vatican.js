@@ -161,7 +161,7 @@ Vatican.validate = function validate(element, accept, erase)
 
 	else
 	{
-		return false;
+		return "";
 	}
 }
 
