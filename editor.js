@@ -187,6 +187,7 @@ editor.removeCreature = function removeCreature(index)
 	if( (typeof index === "number") && (index >= 0) && (index < soup.length) )
 	{
 		debug.log("the creature number given (" + index + ") is a valid creature index; removing it now");
+		editor.clearSelection(index);
 		soup.splice(index, 1);
 	}
 

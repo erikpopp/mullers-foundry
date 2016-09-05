@@ -19,7 +19,7 @@ Simulator.changeMutationRate = function changeMutationRate(rate)
 //function changeMutationRate() changes the mutation rate
 	var debug = Vatican.debugLog("function changeMutationRate() ran", Simulator.debug);
 	var element = document.getElementById("mutationRate");
-	var newRate = parseInt(element.value);
+	var newRate = Vatican.validate(element, /^\d+$/, /\D+/g);
 
 //allow other parts of the program to change the mutation rate
 	if(typeof rate == "number")
@@ -28,10 +28,10 @@ Simulator.changeMutationRate = function changeMutationRate(rate)
 		newRate = rate;
 	}
 
-	else if(newRate != NaN)
+	else if(newRate != false)
 	{
 		debug.log("the number typed in the text box (" + newRate + ") will be the new mutation rate");
-		element.value = newRate.toString();
+		element.value = newRate;
 	}
 
 	else
@@ -48,7 +48,7 @@ Simulator.changeMutationRate = function changeMutationRate(rate)
 
 	else
 	{
-		Simulator.mutationRate = newRate;
+		Simulator.mutationRate = +newRate;
 	}
 
 	debug.show();

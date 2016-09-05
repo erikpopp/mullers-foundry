@@ -127,31 +127,19 @@ Vatican.debugLog = function debugLog(text, on)
 		}
 }
 
-Vatican.validate = function validate(arg, accept, erase)
+Vatican.validate = function validate(element, accept, erase)
 {
-//function validate() is meant to run as an event handler, but can be run as a string method or on its own
-//it processes the string passed as its first argument, and returns the result
+//function validate() is meant for validating text input from a GUI.
+//it removes any characters that match pattern [erase], then checks if the remaining string matches pattern [accept]
+//if the match succeeds, it returns the string that matches
+//if the match fails, it returns [false]
 
-//it requires two argument, the last is optional:
-//[arg]:	A string to validate according to the first two parameters, or a reference to a text box.  The text box can be either a textarea or an input type="text"
-//[accept]:	a string or regular expression that the text must match after all characters matching the last parameter have been removed
-//[erase]:	optional.  A string or regular expression. Any match will be deleted
+//it requires the first two arguments; the third is optional:
+//[element]:	A reference to a DOM element with property [value], typically a textbox or an [input type="text"]
+//[accept]:	a regular expression that the text must match after all characters matching the last parameter have been removed
+//[erase]:	optional.  A regular expression. Any match will be deleted
 
-	if(arg.nodeName && (typeof arg.value === "string") )
-	{
-		var element = arg;	//[arg] is an HTML text box
-		var text = arg.value.toString();	//get the text to validate
-	}
-
-	else if(typeof arg === "string")
-	{
-		var text = arg;
-	}
-
-	else
-	{
-		throw new Error("function validate(" + arg + ", " + accept + ", " + erase + "): neither a string nor an HTML text box was passed as the first parameter");
-	}
+	var text = element.value.toString();
 
 	if(erase)
 	{
@@ -164,19 +152,17 @@ Vatican.validate = function validate(arg, accept, erase)
 		throw new Error("function validate(" + arg + ", " + accept + ", " + remove + "): a second parameter is required.  It can be a regular expression or a string.");
 	}
 
-	if(typeof accept === "string")
+	element.value = text;
+	
+	if(accept.test(text) )
 	{
-		accept = new RegExp(accept);	//if the second parameter is a string, convert it to a regular expression
+		return text;
 	}
 
-	var valid = accept.test(text);
-
-	if(element && (element.value != text) )
+	else
 	{
-		element.value = text;	//if the first parameter is an HTML text box, replace its value if needed
+		return false;
 	}
-
-	return (valid) ? text : "";
 }
 
 //add a proper Object.toString()
