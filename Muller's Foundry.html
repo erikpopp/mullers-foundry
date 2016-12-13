@@ -58,7 +58,7 @@
 					<input type="text" id="simulationSpeed" value="50" onkeyup="Interface.changeSpeed()">
 				</td>
 				<td class="left">
-					<input type="checkbox" id="soupVisible" checked onclick="Interface.soupVisible = this.checked; var element = document.getElementById('visibleSoup'); if(this.checked){Interface.display.call(window); element.className = 'visible'} else {element.className = 'hidden'; element.innerHTML = ''}">
+					<input type="checkbox" id="soupVisible" checked onclick="Interface.soupVisible = this.checked; var element = document.getElementById('visibleSoup'); if(this.checked){Interface.showSoup.call(window); element.className = 'visible'} else {element.className = 'hidden'; element.innerHTML = ''}">
 					Show Creatures
 				</td>
 				<td class="left">
